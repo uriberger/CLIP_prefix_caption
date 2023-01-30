@@ -349,6 +349,7 @@ def main():
     parser.add_argument('--num_layers', type=int, default=8)
     parser.add_argument('--is_rn', dest='is_rn', action='store_true')
     parser.add_argument('--normalize_prefix', dest='normalize_prefix', action='store_true')
+    parser.add_argument('--load_model_from_path', type=str, default=None)
     args = parser.parse_args()
     prefix_length = args.prefix_length
     dataset = ClipCocoDataset(args.data, prefix_length, normalize_prefix=args.normalize_prefix)
@@ -362,6 +363,8 @@ def main():
         model = ClipCaptionModel(prefix_length, clip_length=args.prefix_length_clip, prefix_size=prefix_dim,
                                   num_layers=args.num_layers, mapping_type=args.mapping_type)
         print("Train both prefix and GPT")
+        if args.load_model_from_path is not None:
+            model.load_state_dict(torch.load(load_model_from_path, map_location=torch.device("cpu")))
         sys.stdout.flush()
     train(dataset, model, args, output_dir=args.out_dir, output_prefix=args.prefix)
 
