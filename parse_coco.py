@@ -9,30 +9,43 @@ from tqdm import tqdm
 import argparse
 
 
-def main(clip_model_type: str):
+def main(clip_model_type: str, image_ids_file: str):
+    with open(image_ids_file, 'r') as fp:
+        image_ids_dict = {int(x.strip()): True for x in fp}
     device = torch.device('cuda:0')
     clip_model_name = clip_model_type.replace('/', '_')
     out_path = f"./data/coco/oscar_split_{clip_model_name}_train.pkl"
     clip_model, preprocess = clip.load(clip_model_type, device=device, jit=False)
-    with open('./data/coco/annotations/train_caption.json', 'r') as f:
-        data = json.load(f)
-    print("%0d captions loaded from json " % len(data))
+    with open('dataset_coco.json', 'r') as f:
+        data = json.load(f)['images']
+    print("%0d images loaded from json " % len(data))
     all_embeddings = []
     all_captions = []
-    for i in tqdm(range(len(data))):
-        d = data[i]
-        img_id = d["image_id"]
-        filename = f"./data/coco/train2014/COCO_train2014_{int(img_id):012d}.jpg"
-        if not os.path.isfile(filename):
-            filename = f"./data/coco/val2014/COCO_val2014_{int(img_id):012d}.jpg"
-        image = io.imread(filename)
+    image_count = 0
+    caption_count = 0
+    for image_count in tqdm(range(len(data))):
+        d = data[image_count]
+        img_id = d["cocoid"]
+        if img_id not in image_ids_dict:
+            continue
+        dirname = d['filepath']
+        filename = d['filename']
+        filepath = f"/cs/labs/oabend/uriber/datasets/COCO/{dirname}/{filename}"
+        assert os.path.isfile(filepath), 'Error: missing file in path ' + filepath
+        image = io.imread(filepath)
         image = preprocess(Image.fromarray(image)).unsqueeze(0).to(device)
         with torch.no_grad():
             prefix = clip_model.encode_image(image).cpu()
-        d["clip_embedding"] = i
-        all_embeddings.append(prefix)
-        all_captions.append(d)
-        if (i + 1) % 10000 == 0:
+        for sentence in d['sentences']:
+            res = {}
+            res["clip_embedding"] = caption_count
+            res['image_id'] = img_id
+            res['id'] = sentence['sentid']
+            res['caption'] = sentence['raw']
+            all_embeddings.append(prefix)
+            all_captions.append(res)
+            caption_count += 1
+        if (image_count + 1) % 10000 == 0:
             with open(out_path, 'wb') as f:
                 pickle.dump({"clip_embedding": torch.cat(all_embeddings, dim=0), "captions": all_captions}, f)
 
@@ -47,5 +60,6 @@ def main(clip_model_type: str):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--clip_model_type', default="ViT-B/32", choices=('RN50', 'RN101', 'RN50x4', 'ViT-B/32'))
+    parser.add_argument('--image_ids_file', type=str)
     args = parser.parse_args()
-    exit(main(args.clip_model_type))
+    exit(main(args.clip_model_type, args.image_ids_file))
