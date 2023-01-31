@@ -5,3 +5,4 @@ __pycache__
 dataset_coco.json
 data/*
 *.csv
+run_script
