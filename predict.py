@@ -46,7 +46,7 @@ CPU = torch.device("cpu")
 
 
 class Predictor(cog.Predictor):
-    def setup(self):
+    def setup(self, model_name=None, model_path=None):
         """Load the model into memory to make running multiple predictions efficient"""
         self.device = torch.device("cuda")
         self.clip_model, self.preprocess = clip.load(
@@ -56,7 +56,11 @@ class Predictor(cog.Predictor):
 
         self.models = {}
         self.prefix_length = 10
-        for key, weights_path in WEIGHTS_PATHS.items():
+        if model_name is None:
+            model_dict = WEIGHTS_PATHS
+        else:
+            model_dict = {model_name: model_path}
+        for key, weights_path in model_dict.items():
             model = ClipCaptionModel(self.prefix_length)
             model.load_state_dict(torch.load(weights_path, map_location=CPU))
             model = model.eval()
