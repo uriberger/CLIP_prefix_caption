@@ -7,3 +7,5 @@ data/*
 *.csv
 run_script
 evaluation/*
+slurm-*
+flickr30k_test.txt
