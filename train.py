@@ -364,7 +364,8 @@ def main():
                                   num_layers=args.num_layers, mapping_type=args.mapping_type)
         print("Train both prefix and GPT")
         if args.load_model_from_path is not None:
-            model.load_state_dict(torch.load(load_model_from_path, map_location=torch.device("cpu")))
+            model.load_state_dict(torch.load(args.load_model_from_path, map_location=torch.device("cpu")))
+            print("Model loaded from " + args.load_model_from_path)
         sys.stdout.flush()
     train(dataset, model, args, output_dir=args.out_dir, output_prefix=args.prefix)
 
