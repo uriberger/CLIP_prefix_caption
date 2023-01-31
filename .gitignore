@@ -4,3 +4,4 @@ venv
 __pycache__
 dataset_coco.json
 data/*
+*.csv
