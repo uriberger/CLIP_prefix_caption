@@ -13,7 +13,7 @@ import csv
 def main(clip_model_type: str, csv_file: str, caption_source: str):
     device = torch.device('cuda:0')
     clip_model_name = clip_model_type.replace('/', '_')
-    out_path = f"./data/coco/oscar_split_{clip_model_name}_train.pkl"
+    out_path = f"./data/coco/new_data_{clip_model_name}_train_{caption_source}.pkl"
     clip_model, preprocess = clip.load(clip_model_type, device=device, jit=False)
     with open('dataset_coco.json', 'r') as f:
         data = json.load(f)['images']
