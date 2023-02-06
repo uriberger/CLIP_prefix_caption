@@ -292,6 +292,7 @@ def train(dataset: ClipCocoDataset, model: ClipCaptionModel, args,
           lr: float = 2e-5, warmup_steps: int = 5000, output_dir: str = ".", output_prefix: str = ""):
 
     device = torch.device('cuda:0')
+    train_log = open(os.path.join(output_dir, train_log.txt))
     batch_size = args.bs
     epochs = args.epochs
     if not os.path.exists(output_dir):
@@ -307,6 +308,7 @@ def train(dataset: ClipCocoDataset, model: ClipCaptionModel, args,
     for epoch in range(epochs):
         print(f">>> Training epoch {epoch}")
         sys.stdout.flush()
+        train_log.write(f"Epoch {epoch}\n")
         progress = tqdm(total=len(train_dataloader), desc=output_prefix)
         for idx, (tokens, mask, prefix) in enumerate(train_dataloader):
             model.zero_grad()
@@ -320,6 +322,7 @@ def train(dataset: ClipCocoDataset, model: ClipCaptionModel, args,
             optimizer.zero_grad()
             progress.set_postfix({"loss": loss.item()})
             progress.update()
+            train_log.write(f"\tloss: {loss.item()}\n")
             if (idx + 1) % 10000 == 0:
                 torch.save(
                     model.state_dict(),
@@ -331,6 +334,7 @@ def train(dataset: ClipCocoDataset, model: ClipCaptionModel, args,
                 model.state_dict(),
                 os.path.join(output_dir, f"{output_prefix}-{epoch:03d}.pt"),
             )
+    train_log.close()
     return model
 
 
