@@ -292,11 +292,11 @@ def train(dataset: ClipCocoDataset, model: ClipCaptionModel, args,
           lr: float = 2e-5, warmup_steps: int = 5000, output_dir: str = ".", output_prefix: str = ""):
 
     device = torch.device('cuda:0')
-    train_log = open(os.path.join(output_dir, train_log.txt))
     batch_size = args.bs
     epochs = args.epochs
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    train_log = open(os.path.join(output_dir, 'train_log.txt'), 'w')
     model = model.to(device)
     model.train()
     optimizer = AdamW(model.parameters(), lr=lr)
