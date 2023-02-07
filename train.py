@@ -340,6 +340,7 @@ def train(dataset: ClipCocoDataset, model: ClipCaptionModel, args, val_dataset,
                 os.path.join(output_dir, f"{output_prefix}-{epoch:03d}.pt"),
             )
         if args.epoch_evaluation:
+            print('Evaluating at the end of the epoch...')
             eval_res = evaluate_model(model, val_dataset, device, output_dir, str(epoch))
             train_log.write(str(eval_res) + '\n')
         train_log.write('\n')
@@ -354,22 +355,32 @@ def evaluate_model(model, val_dataset, device, output_dir, file_suffix):
     generated_captions = []
     gt_data = []
     predictor = Predictor()
+    print('\tSetting up predictor...')
     predictor.setup_with_existing_object(model)
+    visited_image_ids = {}
+    print('\tTraversing validation set...')
     for idx, (tokens, mask, prefix) in enumerate(val_dataloader):
         with torch.no_grad():
+            image_id = val_dataset.image_ids[idx]
+            image_path = val_dataset.image_paths[idx]
+            caption_id = val_dataset.ids[idx]
+            gt_caption = val_dataset.captions[idx]
+
+            gt_data.append({'image_id': image_id, 'caption': gt_caption, 'id': caption_id})
+
+            if image_id in visited_image_ids:
+                continue
+            else:
+                visited_image_ids[image_id] = True
+
             tokens, mask, prefix = tokens.to(device), mask.to(device), prefix.to(device, dtype=torch.float32)
             outputs = model(tokens, prefix, mask)
             logits = outputs.logits[:, val_dataset.prefix_length - 1: -1]
             loss = nnf.cross_entropy(logits.reshape(-1, logits.shape[-1]), tokens.flatten(), ignore_index=0)
             loss_sum += loss.item()
 
-            image_path = val_dataset.image_paths[idx]
-            image_id = val_dataset.image_ids[idx]
-            caption_id = val_dataset.ids[idx]
-
             generated_caption = predictor.predict(image=image_path, model='existing', use_beam_search=True)
             generated_captions.append({'image_id': image_id, 'caption': generated_caption, 'id': idx})
-            gt_data.append({'image_id': image_id, 'caption': generated_caption, 'id': caption_id})
 
     generation_filepath = os.path.join(output_dir, 'val_generation_' + file_suffix + '.json')
     with open(generation_filepath, 'w') as fp:
@@ -383,6 +394,7 @@ def evaluate_model(model, val_dataset, device, output_dir, file_suffix):
         with open(gt_filepath, 'w') as fp:
             json.dump(gt_data, fp)
 
+    print('\tRunning evaluation script...')
     coco_module = importlib.import_module('coco-caption.pycocotools.coco')
     COCO = getattr(coco_module, 'COCO')
     eval_module = importlib.import_module('coco-caption.pycocoevalcap.eval')
@@ -392,7 +404,9 @@ def evaluate_model(model, val_dataset, device, output_dir, file_suffix):
     cocoRes = coco.loadRes(generation_filepath)
     cocoEval = COCOEvalCap(coco, cocoRes, 'corpus')
 
-    return cocoEval.evaluate()
+    res_dict = cocoEval.evaluate()
+    res_dict['mean_loss'] = loss_sum/len(visited_image_ids)
+    return res_dict
             
 
 def main():
