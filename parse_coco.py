@@ -47,8 +47,8 @@ def create_database_from_image_ids(image_ids_file):
         image_id_dict = {int(x.strip()): True for x in fp}
     with open('dataset_coco.json', 'r') as f:
         data = json.load(f)['images']
-    for sample in data['images']:
-        image_id = sample['coco_id']
+    for sample in data:
+        image_id = sample['cocoid']
         if image_id not in image_id_dict:
             continue
         dirname = sample['filepath']
@@ -65,12 +65,14 @@ def create_database_from_image_ids(image_ids_file):
             res['caption'] = sentence['raw']
             database.append(res)
 
+    return database
+
 def main(clip_model_type: str, database: list, output_file: str):
     device = torch.device('cuda:0')
     out_path = f"./data/coco/{output_file}.pkl"
     clip_model, preprocess = clip.load(clip_model_type, device=device, jit=False)
 
-    print("%0d sample loaded" % len(database))
+    print("%0d samples loaded" % len(database))
     all_embeddings = []
     all_captions = []
     caption_count = 0
