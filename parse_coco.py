@@ -42,6 +42,7 @@ def main(clip_model_type: str, csv_file: str, caption_source: str):
             res["clip_embedding"] = caption_count
             res['image_id'] = image_id
             res['id'] = caption_count
+            res['image_path'] = filepath
             if caption_source == 'gt':
                 res['caption'] = row[6]
             elif caption_source == 'revised':

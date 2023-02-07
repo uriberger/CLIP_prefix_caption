@@ -67,6 +67,15 @@ class Predictor(cog.Predictor):
             model = model.to(self.device)
             self.models[key] = model
 
+    def setup_with_existing_object(self, model_obj):
+        self.device = torch.device("cuda")
+        self.clip_model, self.preprocess = clip.load(
+            "ViT-B/32", device=self.device, jit=False
+        )
+        self.tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+
+        self.models = {'existing': model_obj}
+
     @cog.input("image", type=cog.Path, help="Input image")
     @cog.input(
         "model",

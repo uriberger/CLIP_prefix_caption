@@ -11,7 +11,8 @@ import sys
 import argparse
 import json
 from typing import Tuple, Optional, Union
-
+from predict import Predictor
+import importlib
 
 class MappingType(Enum):
     MLP = 'mlp'
@@ -41,9 +42,11 @@ class ClipCocoDataset(Dataset):
     def __getitem__(self, item: int) -> Tuple[torch.Tensor, ...]:
         tokens, mask = self.pad_tokens(item)
         prefix = self.prefixes[self.caption2embedding[item]]
+
         if self.normalize_prefix:
             prefix = prefix.float()
             prefix = prefix / prefix.norm(2, -1)
+
         return tokens, mask, prefix
 
     def __init__(self, data_path: str,  prefix_length: int, gpt2_type: str = "gpt2",
@@ -59,6 +62,8 @@ class ClipCocoDataset(Dataset):
         captions_raw = all_data["captions"]
         self.image_ids = [caption["image_id"] for caption in captions_raw]
         self.captions = [caption['caption'] for caption in captions_raw]
+        self.ids = [caption['id'] for caption in captions_raw]
+        self.image_paths = [caption["image_path"] for caption in captions_raw]
         if os.path.isfile(f"{data_path[:-4]}_tokens.pkl"):
             with open(f"{data_path[:-4]}_tokens.pkl", 'rb') as f:
                 self.captions_tokens, self.caption2embedding, self.max_seq_len = pickle.load(f)
@@ -288,7 +293,7 @@ def load_model(config_path: str, epoch_or_latest: Union[str, int] = '_latest'):
     return model, parser
 
 
-def train(dataset: ClipCocoDataset, model: ClipCaptionModel, args,
+def train(dataset: ClipCocoDataset, model: ClipCaptionModel, args, val_dataset,
           lr: float = 2e-5, warmup_steps: int = 5000, output_dir: str = ".", output_prefix: str = ""):
 
     device = torch.device('cuda:0')
@@ -334,9 +339,61 @@ def train(dataset: ClipCocoDataset, model: ClipCaptionModel, args,
                 model.state_dict(),
                 os.path.join(output_dir, f"{output_prefix}-{epoch:03d}.pt"),
             )
+        if args.epoch_evaluation:
+            eval_res = evaluate_model(model, val_dataset, device, output_dir, str(epoch))
+            train_log.write(str(eval_res) + '\n')
+        train_log.write('\n')
     train_log.close()
     return model
 
+def evaluate_model(model, val_dataset, device, output_dir, file_suffix):
+    model.eval()
+
+    val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=False, drop_last=False)
+    loss_sum = 0
+    generated_captions = []
+    gt_data = []
+    predictor = Predictor()
+    predictor.setup_with_existing_object(model)
+    for idx, (tokens, mask, prefix) in enumerate(val_dataloader):
+        with torch.no_grad():
+            tokens, mask, prefix = tokens.to(device), mask.to(device), prefix.to(device, dtype=torch.float32)
+            outputs = model(tokens, prefix, mask)
+            logits = outputs.logits[:, val_dataset.prefix_length - 1: -1]
+            loss = nnf.cross_entropy(logits.reshape(-1, logits.shape[-1]), tokens.flatten(), ignore_index=0)
+            loss_sum += loss.item()
+
+            image_path = val_dataset.image_paths[idx]
+            image_id = val_dataset.image_ids[idx]
+            caption_id = val_dataset.ids[idx]
+
+            generated_caption = predictor.predict(image=image_path, model='existing', use_beam_search=True)
+            generated_captions.append({'image_id': image_id, 'caption': generated_caption, 'id': idx})
+            gt_data.append({'image_id': image_id, 'caption': generated_caption, 'id': caption_id})
+
+    generation_filepath = os.path.join(output_dir, 'val_generation_' + file_suffix + '.json')
+    with open(generation_filepath, 'w') as fp:
+        json.dump(generated_captions, fp)
+
+    model.train()
+
+    gt_filepath = os.path.join(output_dir, 'val_gt.json')
+    gt_data = {'annotations': gt_data}
+    if not os.path.isfile(gt_filepath):
+        with open(gt_filepath, 'w') as fp:
+            json.dump(gt_data, fp)
+
+    coco_module = importlib.import_module('coco-caption.pycocotools.coco')
+    COCO = getattr(coco_module, 'COCO')
+    eval_module = importlib.import_module('coco-caption.pycocoevalcap.eval')
+    COCOEvalCap = getattr(eval_module, 'COCOEvalCap')
+
+    coco = COCO(gt_filepath)
+    cocoRes = coco.loadRes(generation_filepath)
+    cocoEval = COCOEvalCap(coco, cocoRes, 'corpus')
+
+    return cocoEval.evaluate()
+            
 
 def main():
     parser = argparse.ArgumentParser()
@@ -354,9 +411,16 @@ def main():
     parser.add_argument('--is_rn', dest='is_rn', action='store_true')
     parser.add_argument('--normalize_prefix', dest='normalize_prefix', action='store_true')
     parser.add_argument('--load_model_from_path', type=str, default=None)
+    parser.add_argument('--epoch_evaluation', dest='only_prefix', action='store_true')
+    parser.add_argument('--validation_set_path', type=str, default=None)
     args = parser.parse_args()
+    if args.epoch_evaluation:
+        assert args.validation_set_path, 'Error: If --epoch_evaluation is used, --validation_set_path should also be set'
     prefix_length = args.prefix_length
     dataset = ClipCocoDataset(args.data, prefix_length, normalize_prefix=args.normalize_prefix)
+    val_dataset = None
+    if args.epoch_evaluation:
+        val_dataset = ClipCocoDataset(args.validation_set_path, prefix_length, normalize_prefix=args.normalize_prefix)
     prefix_dim = 640 if args.is_rn else 512
     args.mapping_type = {'mlp': MappingType.MLP, 'transformer': MappingType.Transformer}[args.mapping_type]
     if args.only_prefix:
@@ -371,7 +435,7 @@ def main():
             model.load_state_dict(torch.load(args.load_model_from_path, map_location=torch.device("cpu")))
             print("Model loaded from " + args.load_model_from_path)
         sys.stdout.flush()
-    train(dataset, model, args, output_dir=args.out_dir, output_prefix=args.prefix)
+    train(dataset, model, args, val_dataset output_dir=args.out_dir, output_prefix=args.prefix)
 
 
 if __name__ == '__main__':
