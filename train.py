@@ -411,7 +411,7 @@ def main():
     parser.add_argument('--is_rn', dest='is_rn', action='store_true')
     parser.add_argument('--normalize_prefix', dest='normalize_prefix', action='store_true')
     parser.add_argument('--load_model_from_path', type=str, default=None)
-    parser.add_argument('--epoch_evaluation', dest='only_prefix', action='store_true')
+    parser.add_argument('--epoch_evaluation', action='store_true')
     parser.add_argument('--validation_set_path', type=str, default=None)
     args = parser.parse_args()
     if args.epoch_evaluation:
@@ -435,7 +435,7 @@ def main():
             model.load_state_dict(torch.load(args.load_model_from_path, map_location=torch.device("cpu")))
             print("Model loaded from " + args.load_model_from_path)
         sys.stdout.flush()
-    train(dataset, model, args, val_dataset output_dir=args.out_dir, output_prefix=args.prefix)
+    train(dataset, model, args, val_dataset, output_dir=args.out_dir, output_prefix=args.prefix)
 
 
 if __name__ == '__main__':

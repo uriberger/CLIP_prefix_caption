@@ -75,6 +75,7 @@ class Predictor(cog.Predictor):
         self.tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
         self.models = {'existing': model_obj}
+        self.prefix_length = 10
 
     @cog.input("image", type=cog.Path, help="Input image")
     @cog.input(
