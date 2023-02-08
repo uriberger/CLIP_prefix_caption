@@ -89,7 +89,7 @@ def main(clip_model_type: str, database: list, output_file: str):
         all_captions.append(res)
         caption_count += 1
         if (caption_count + 1) % 10000 == 0:
-            print('Starting caption ' + str(caption_count+1))
+            print('Starting caption ' + str(caption_count+1), flush=True)
             with open(out_path, 'wb') as f:
                 pickle.dump({"clip_embedding": torch.cat(all_embeddings, dim=0), "captions": all_captions}, f)
 

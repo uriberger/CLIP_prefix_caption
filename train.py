@@ -314,6 +314,7 @@ def train(dataset: ClipCocoDataset, model: ClipCaptionModel, args, val_dataset,
         print(f">>> Training epoch {epoch}")
         sys.stdout.flush()
         train_log.write(f"Epoch {epoch}\n")
+        train_log.flush()
         progress = tqdm(total=len(train_dataloader), desc=output_prefix)
         for idx, (tokens, mask, prefix) in enumerate(train_dataloader):
             model.zero_grad()
@@ -344,6 +345,7 @@ def train(dataset: ClipCocoDataset, model: ClipCaptionModel, args, val_dataset,
             eval_res = evaluate_model(model, val_dataset, device, output_dir, str(epoch))
             train_log.write(str(eval_res) + '\n')
         train_log.write('\n')
+        train_log.flush()
     train_log.close()
     return model
 
