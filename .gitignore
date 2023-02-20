@@ -5,8 +5,9 @@ __pycache__
 dataset_coco.json
 data/*
 *.csv
-run_script
+*_script
 evaluation/*
 slurm-*
 flickr30k_test.txt
 coco-caption/
+train_*/*
