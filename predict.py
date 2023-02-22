@@ -324,7 +324,7 @@ def prepare_for_prediction(model_path, used_ids_file_name):
         data = json.load(fp)['images']
 
     train_set = [x for x in data if x['split'] == 'train']
-    used_ids_file_path = os.path.join('data', 'coco', used_ids_file_name + '.txt')
+    used_ids_file_path = os.path.join('data', 'coco', used_ids_file_name)
     with open(used_ids_file_path, 'r') as fp:
         used_image_ids = {int(x.strip()): True for x in fp}
     filtered_train_set = [x for x in train_set if x['cocoid'] not in used_image_ids]
