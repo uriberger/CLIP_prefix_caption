@@ -28,6 +28,7 @@ if sys.argv[1] == 'COCO':
         image_path = '/cs/labs/oabend/uriber/datasets/COCO/' + sample['filepath'] + '/' + sample['filename']
         image_id = sample['cocoid']
         dataset[image_id] = image_path
+    res_name = 'COCO'
 elif sys.argv[1] == 'flickr30k':
     # Flickr30k
     test_ids = get_test_ids()
@@ -42,12 +43,14 @@ elif sys.argv[1] == 'flickr30k':
         image_path = '/cs/labs/oabend/uriber/datasets/flickr30/images/' + str(sample['image_id']) + '.jpg'
         image_id = sample['image_id']
         dataset[image_id] = image_path
-elif sys.argv[1].startswith('COCO_'):
+    res_name = 'flickr30k'
+elif sys.argv[1].split('/')[-1].startswith('COCO_'):
     image_dir_path = sys.argv[1]
     dataset = {}
     for file_name in os.listdir(image_dir_path):
         image_id = int(file_name.split('_')[0])
         dataset[image_id] = os.path.join(image_dir_path, file_name)
+    res_name = image_dir_path.split('/')[-1]
     
 print('Generating captions...')
 res = []
@@ -59,13 +62,13 @@ for image_id, image_path in dataset.items():
         time_from_prev = time.time() - prev_checkpoint
         prev_checkpoint = time.time()
         print('\tStarting sample ' + str(count) + ' out of ' + str(len(dataset)) + ', time from prev ' + str(time_from_prev), flush=True)
-        with open('res_' + sys.argv[1] + '.json', 'w') as fp:
+        with open('res_' + res_name + '.json', 'w') as fp:
             json.dump(res, fp)
     count += 1
     generated_caption = predictor.predict(image=image_path, model=model_name, use_beam_search=True)
     res.append({'image_id': image_id, 'caption': generated_caption, 'id': count})
 
-with open('res_' + sys.argv[1] + '.json',  'w') as fp:
+with open('res_' + res_name + '.json',  'w') as fp:
     json.dump(res, fp)
 
 print('Finished!')
