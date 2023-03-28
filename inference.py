@@ -3,6 +3,7 @@ import json
 import time
 import sys
 from flickr30k_utils import get_caption_data, get_test_ids
+import os
 
 model_name = 'coco'
 if len(sys.argv) == 2:
@@ -41,6 +42,12 @@ elif sys.argv[1] == 'flickr30k':
         image_path = '/cs/labs/oabend/uriber/datasets/flickr30/images/' + str(sample['image_id']) + '.jpg'
         image_id = sample['image_id']
         dataset[image_id] = image_path
+elif sys.argv[1].startswith('COCO_'):
+    image_dir_path = sys.argv[1]
+    dataset = {}
+    for file_name in os.listdir(image_dir_path):
+        image_id = int(file_name.split('_')[0])
+        dataset[image_id] = os.path.join(image_dir_path, file_name)
     
 print('Generating captions...')
 res = []
