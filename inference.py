@@ -44,13 +44,25 @@ elif sys.argv[1] == 'flickr30k':
         image_id = sample['image_id']
         dataset[image_id] = image_path
     res_name = 'flickr30k'
-elif sys.argv[1].split('/')[-1].startswith('COCO_'):
-    image_dir_path = sys.argv[1]
-    dataset = {}
-    for file_name in os.listdir(image_dir_path):
-        image_id = int(file_name.split('_')[0])
-        dataset[image_id] = os.path.join(image_dir_path, file_name)
-    res_name = image_dir_path.split('/')[-1]
+else:
+    if os.path.isdir(sys.argv[1]):
+        image_dir_path = sys.argv[1]
+        dataset = {}
+        for file_name in os.listdir(image_dir_path):
+            image_id = int(file_name.split('_')[0])
+            dataset[image_id] = os.path.join(image_dir_path, file_name)
+        res_name = image_dir_path.split('/')[-1]
+    elif os.path.isfile(sys.argv[1]):
+        dataset_file_path = sys.argv[1]
+        with open(dataset_file_path, 'r') as fp:
+            data = json.load(fp)
+        dataset = {}
+        for sample in dataset:
+            image_id = sample['image_id']
+            image_dir_path = '/cs/labs/oabend/uriber/datasets/COCO/val2014'
+            file_name = 'COCO_val2014_' + str(image_id).zfill(12) + '.jpg'
+            dataset[image_id] = os.path.join(image_dir_path, file_name)
+        res_name = dataset_file_path.split('/')[-1].split('.')[0]
     
 print('Generating captions...')
 res = []
