@@ -57,7 +57,7 @@ else:
         with open(dataset_file_path, 'r') as fp:
             data = json.load(fp)
         dataset = {}
-        for sample in dataset:
+        for sample in data:
             image_id = sample['image_id']
             image_dir_path = '/cs/labs/oabend/uriber/datasets/COCO/val2014'
             file_name = 'COCO_val2014_' + str(image_id).zfill(12) + '.jpg'
