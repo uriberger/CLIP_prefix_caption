@@ -63,7 +63,8 @@ else:
             file_name = 'COCO_val2014_' + str(image_id).zfill(12) + '.jpg'
             dataset[image_id] = os.path.join(image_dir_path, file_name)
         res_name = dataset_file_path.split('/')[-1].split('.')[0]
-    
+
+print('Dataset size: ' + str(len(dataset)))
 print('Generating captions...')
 res = []
 count = 0
