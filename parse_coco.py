@@ -7,6 +7,7 @@ import pickle
 import json
 import os
 import csv
+import random
 
 def create_database_from_csv(csv_file: str, caption_source: str):
     database = []
@@ -41,6 +42,38 @@ def create_database_from_csv(csv_file: str, caption_source: str):
 
     return database
 
+def create_database_from_mturk(csv_file: str):
+    database = []
+    with open('dataset_coco.json', 'r') as f:
+        data = json.load(f)['images']
+    print("%0d images loaded from json " % len(data))
+    caption_count = 0
+
+    with open(csv_file, 'r') as fp:
+        my_reader = csv.reader(fp)
+        first = True
+        for row in my_reader:
+            if first:
+                first = False
+                continue
+            if row[29] != 'clipcap':
+                continue
+            filename = row[27].split('/')[-1]
+            image_id = int(filename.split('2014_')[-1].split('.jpg')[0])
+            dirname = 'val2014'
+            filepath = f"/cs/labs/oabend/uriber/datasets/COCO/{dirname}/{filename}"
+            assert os.path.isfile(filepath), 'Error: missing file in path ' + filepath
+        
+            res = {}
+            res['image_id'] = image_id
+            res['id'] = caption_count
+            res['image_path'] = filepath
+            res['caption'] = row[30]
+            database.append(res)
+            caption_count += 1
+
+    return database
+
 def create_database_from_image_ids(image_ids_file):
     database = []
     with open(image_ids_file, 'r') as fp:
@@ -56,8 +89,12 @@ def create_database_from_image_ids(image_ids_file):
         filename = f'COCO_{dirname}_{image_id_full_str}.jpg'
         filepath = f"/cs/labs/oabend/uriber/datasets/COCO/{dirname}/{filename}"
         assert os.path.isfile(filepath), 'Error: missing file in path ' + filepath
-    
-        for sentence in sample['sentences']:
+
+        # Pick 2 random captions
+        caption_inds = random.sample(range(len(sample['sentences'])), 2)
+        
+        for caption_ind in caption_inds:
+            sentence = sample['sentences'][caption_ind]
             res = {}
             res['image_id'] = image_id
             res['id'] = sentence['sentid']
@@ -105,14 +142,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--clip_model_type', default="ViT-B/32", choices=('RN50', 'RN101', 'RN50x4', 'ViT-B/32'))
     parser.add_argument('--csv_file', type=str, default=None)
+    parser.add_argument('--mturk_results_file', type=str, default=None)
     parser.add_argument('--caption_source', type=str, default='gt', choices=('gt', 'revised'))
     parser.add_argument('--image_ids_file', type=str, default=None)
     parser.add_argument('--output_file', type=str, default='data')
     args = parser.parse_args()
 
-    assert args.csv_file is not None or args.image_ids_file is not None, 'Error: please provide --csv_file or --image_ids_file'
+    assert args.csv_file is not None or args.mturk_results_file or args.image_ids_file is not None, 'Error: please provide --csv_file or --mturk_results_file or --image_ids_file'
     if args.csv_file is not None:
         database = create_database_from_csv(args.csv_file, args.caption_source)
+    elif args.mturk_results_file is not None:
+        database = create_database_from_mturk(args.mturk_results_file)
     else:
         database = create_database_from_image_ids(args.image_ids_file)
 
