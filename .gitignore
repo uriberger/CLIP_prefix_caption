@@ -11,3 +11,4 @@ slurm-*
 flickr30k_test.txt
 coco-caption/
 train_*/*
+res*.json
