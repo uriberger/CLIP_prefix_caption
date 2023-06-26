@@ -53,16 +53,15 @@ else:
             dataset[image_id] = os.path.join(image_dir_path, file_name)
         res_name = image_dir_path.split('/')[-1]
     elif os.path.isfile(sys.argv[1]):
-        dataset_file_path = sys.argv[1]
-        with open(dataset_file_path, 'r') as fp:
-            data = json.load(fp)['images']
+        image_ids_file_path = sys.argv[1]
+        with open(image_ids_file_path, 'r') as fp:
+            image_ids = json.load(fp)
         dataset = {}
-        for sample in data:
-            image_id = sample['id']
+        for image_id in image_ids:
             image_dir_path = '/cs/labs/oabend/uriber/datasets/COCO/val2014'
             file_name = 'COCO_val2014_' + str(image_id).zfill(12) + '.jpg'
             dataset[image_id] = os.path.join(image_dir_path, file_name)
-        res_name = dataset_file_path.split('/')[-1].split('.')[0]
+        res_name = image_ids_file_path.split('/')[-1].split('.')[0]
 
 print('Dataset size: ' + str(len(dataset)))
 print('Generating captions...')
@@ -85,4 +84,3 @@ with open('res_' + res_name + '.json',  'w') as fp:
     json.dump(res, fp)
 
 print('Finished!')
-    
