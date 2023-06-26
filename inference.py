@@ -55,10 +55,10 @@ else:
     elif os.path.isfile(sys.argv[1]):
         dataset_file_path = sys.argv[1]
         with open(dataset_file_path, 'r') as fp:
-            data = json.load(fp)
+            data = json.load(fp)['images']
         dataset = {}
         for sample in data:
-            image_id = sample['image_id']
+            image_id = sample['id']
             image_dir_path = '/cs/labs/oabend/uriber/datasets/COCO/val2014'
             file_name = 'COCO_val2014_' + str(image_id).zfill(12) + '.jpg'
             dataset[image_id] = os.path.join(image_dir_path, file_name)
