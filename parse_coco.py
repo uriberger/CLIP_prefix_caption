@@ -77,7 +77,8 @@ def create_database_from_mturk(csv_file: str):
 def create_database_from_image_ids(image_ids_file):
     database = []
     with open(image_ids_file, 'r') as fp:
-        image_id_dict = {int(x.strip()): True for x in fp}
+        image_ids = json.load(fp)
+        image_id_dict = {x: True for x in image_ids}
     with open('dataset_coco.json', 'r') as f:
         data = json.load(f)['images']
     for sample in data:
