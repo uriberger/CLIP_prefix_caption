@@ -105,6 +105,32 @@ def create_database_from_image_ids(image_ids_file):
 
     return database
 
+def create_database_from_json_file(json_file):
+    database = []
+    with open(json_file, 'r') as f:
+        data = json.load(f)
+    count = 0
+    for sample in data:
+        #image_id = sample['cocoid']
+        #split = sample['split']
+        #image_id_full_str = str(image_id).zfill(12)
+        #filename = f'COCO_{split}2014_{image_id_full_str}.jpg'
+        #image_path = f"/cs/labs/oabend/uriber/datasets/COCO/{split}2014/{filename}"
+        image_path = sample['image_path']
+        assert os.path.isfile(image_path), 'Error: missing file in path ' + image_path
+
+        image_id = sample['image_id']
+        for sentence in sample['sentences']:
+            res = {}
+            res['image_id'] = image_id
+            res['id'] = count
+            res['image_path'] = image_path
+            res['caption'] = sentence['raw']
+            database.append(res)
+            count += 1
+
+    return database
+
 def main(clip_model_type: str, database: list, output_file: str):
     device = torch.device('cuda:0')
     out_path = f"./data/coco/{output_file}.pkl"
@@ -146,14 +172,17 @@ if __name__ == '__main__':
     parser.add_argument('--mturk_results_file', type=str, default=None)
     parser.add_argument('--caption_source', type=str, default='gt', choices=('gt', 'revised'))
     parser.add_argument('--image_ids_file', type=str, default=None)
+    parser.add_argument('--json_file', type=str, default=None)
     parser.add_argument('--output_file', type=str, default='data')
     args = parser.parse_args()
 
-    assert args.csv_file is not None or args.mturk_results_file or args.image_ids_file is not None, 'Error: please provide --csv_file or --mturk_results_file or --image_ids_file'
+    assert args.csv_file is not None or args.mturk_results_file or args.image_ids_file is not None or args.json_file is not None, 'Error: please provide --csv_file or --mturk_results_file or --image_ids_file or --json_file'
     if args.csv_file is not None:
         database = create_database_from_csv(args.csv_file, args.caption_source)
     elif args.mturk_results_file is not None:
         database = create_database_from_mturk(args.mturk_results_file)
+    elif args.json_file is not None:
+        database = create_database_from_json_file(args.json_file)
     else:
         database = create_database_from_image_ids(args.image_ids_file)
 
