@@ -3,6 +3,8 @@ venv
 *.pt
 __pycache__
 dataset_coco.json
+dataset_aic.json
+dataset_coco_cn.json
 data/*
 *.csv
 *_script
