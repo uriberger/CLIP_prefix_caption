@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.nn import functional as nnf
 from torch.utils.data import Dataset, DataLoader
 from enum import Enum
-from transformers import GPT2Tokenizer, GPT2LMHeadModel, AdamW, get_linear_schedule_with_warmup
+from transformers import GPT2Tokenizer, GPT2LMHeadModel, AdamW, get_linear_schedule_with_warmup, AutoTokenizer
 from tqdm import tqdm
 import os
 import pickle
@@ -51,7 +51,7 @@ class ClipCocoDataset(Dataset):
 
     def __init__(self, data_path: str,  prefix_length: int, gpt2_type: str = "gpt2",
                  normalize_prefix=False):
-        self.tokenizer = GPT2Tokenizer.from_pretrained(gpt2_type)
+        self.tokenizer = AutoTokenizer.from_pretrained(gpt2_type)
         self.prefix_length = prefix_length
         self.normalize_prefix = normalize_prefix
         with open(data_path, 'rb') as f:
@@ -239,10 +239,10 @@ class ClipCaptionModel(nn.Module):
         return out
 
     def __init__(self, prefix_length: int, clip_length: Optional[int] = None, prefix_size: int = 512,
-                 num_layers: int = 8, mapping_type: MappingType = MappingType.MLP):
+                 num_layers: int = 8, mapping_type: MappingType = MappingType.MLP, gpt2_model='gpt2'):
         super(ClipCaptionModel, self).__init__()
         self.prefix_length = prefix_length
-        self.gpt = GPT2LMHeadModel.from_pretrained('gpt2')
+        self.gpt = GPT2LMHeadModel.from_pretrained(gpt2_model)
         self.gpt_embedding_size = self.gpt.transformer.wte.weight.shape[1]
         if mapping_type == MappingType.MLP:
             self.clip_project = MLP((prefix_size, (self.gpt_embedding_size * prefix_length) // 2,
@@ -282,9 +282,9 @@ def load_model(config_path: str, epoch_or_latest: Union[str, int] = '_latest'):
         epoch_or_latest = f"-{epoch_or_latest:03d}"
     model_path = os.path.join(args.out_dir, f"{args.prefix}{epoch_or_latest}.pt")
     if args.only_prefix:
-        model = ClipCaptionPrefix(args.prefix_length)
+        model = ClipCaptionPrefix(args.prefix_length, gpt2_model=args.gpt2_model)
     else:
-        model = ClipCaptionModel(args.prefix_length)
+        model = ClipCaptionModel(args.prefix_length, gpt2_model=args.gpt2_model)
     if os.path.isfile(model_path):
         print(f"loading model from {model_path}")
         model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
@@ -429,11 +429,13 @@ def main():
     parser.add_argument('--load_model_from_path', type=str, default=None)
     parser.add_argument('--epoch_evaluation', action='store_true')
     parser.add_argument('--validation_set_path', type=str, default=None)
+    parser.add_argument('--tokenizer', type=str, default='gpt2')
+    parser.add_argument('--gpt2_model', type=str, default='gpt2')
     args = parser.parse_args()
     if args.epoch_evaluation:
         assert args.validation_set_path, 'Error: If --epoch_evaluation is used, --validation_set_path should also be set'
     prefix_length = args.prefix_length
-    dataset = ClipCocoDataset(args.data, prefix_length, normalize_prefix=args.normalize_prefix)
+    dataset = ClipCocoDataset(args.data, prefix_length, normalize_prefix=args.normalize_prefix, gpt2_type=args.tokenizer)
     val_dataset = None
     if args.epoch_evaluation:
         val_dataset = ClipCocoDataset(args.validation_set_path, prefix_length, normalize_prefix=args.normalize_prefix)
@@ -441,11 +443,11 @@ def main():
     args.mapping_type = {'mlp': MappingType.MLP, 'transformer': MappingType.Transformer}[args.mapping_type]
     if args.only_prefix:
         model = ClipCaptionPrefix(prefix_length, clip_length=args.prefix_length_clip, prefix_size=prefix_dim,
-                                  num_layers=args.num_layers, mapping_type=args.mapping_type)
+                                  num_layers=args.num_layers, mapping_type=args.mapping_type, gpt2_model=args.gpt2_model)
         print("Train only prefix")
     else:
         model = ClipCaptionModel(prefix_length, clip_length=args.prefix_length_clip, prefix_size=prefix_dim,
-                                  num_layers=args.num_layers, mapping_type=args.mapping_type)
+                                  num_layers=args.num_layers, mapping_type=args.mapping_type, gpt2_model=args.gpt2_model)
         print("Train both prefix and GPT")
         if args.load_model_from_path is not None:
             model.load_state_dict(torch.load(args.load_model_from_path, map_location=torch.device("cpu")))

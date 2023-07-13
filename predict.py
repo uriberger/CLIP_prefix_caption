@@ -15,6 +15,7 @@ from transformers import (
     GPT2LMHeadModel,
     AdamW,
     get_linear_schedule_with_warmup,
+    AutoTokenizer
 )
 import skimage.io as io
 import PIL.Image
@@ -47,13 +48,13 @@ CPU = torch.device("cpu")
 
 
 class Predictor(cog.Predictor):
-    def setup(self, model_name=None, model_path=None):
+    def setup(self, model_name=None, model_path=None, tokenizer='gpt2'):
         """Load the model into memory to make running multiple predictions efficient"""
         self.device = torch.device("cuda")
         self.clip_model, self.preprocess = clip.load(
             "ViT-B/32", device=self.device, jit=False
         )
-        self.tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
 
         self.models = {}
         self.prefix_length = 10
@@ -68,12 +69,12 @@ class Predictor(cog.Predictor):
             model = model.to(self.device)
             self.models[key] = model
 
-    def setup_with_existing_object(self, model_obj):
+    def setup_with_existing_object(self, model_obj, tokenizer='gpt2'):
         self.device = torch.device("cuda")
         self.clip_model, self.preprocess = clip.load(
             "ViT-B/32", device=self.device, jit=False
         )
-        self.tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
 
         self.models = {'existing': model_obj}
         self.prefix_length = 10
@@ -147,10 +148,10 @@ class ClipCaptionModel(nn.Module):
         out = self.gpt(inputs_embeds=embedding_cat, labels=labels, attention_mask=mask)
         return out
 
-    def __init__(self, prefix_length: int, prefix_size: int = 512):
+    def __init__(self, prefix_length: int, prefix_size: int = 512, model_name: str = 'gpt2'):
         super(ClipCaptionModel, self).__init__()
         self.prefix_length = prefix_length
-        self.gpt = GPT2LMHeadModel.from_pretrained("gpt2")
+        self.gpt = GPT2LMHeadModel.from_pretrained(model_name)
         self.gpt_embedding_size = self.gpt.transformer.wte.weight.shape[1]
         if prefix_length > 10:  # not enough memory
             self.clip_project = nn.Linear(
