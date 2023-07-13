@@ -17,12 +17,13 @@ def translate(sentences, source_language, target_language, output_file, batch_si
     model.to(device)
 
     output_file_name = output_file + '.json'
-    if os.path.isfile(output_file_name):
+    '''if os.path.isfile(output_file_name):
         with open(output_file_name, 'r') as fp:
             res = json.load(fp)
         sentences = sentences[len(res):]
     else:
-        res = []
+        res = []'''
+    res = []
     batch_start = 0
     batch_ind = 0
     batch_num = math.ceil(len(sentences)/batch_size)
@@ -60,11 +61,11 @@ if __name__ == '__main__':
     with open(args.input_file, 'r') as fp:
         data = json.load(fp)
     sentences = [x['caption'] for x in data]    
-    res = translate(sentences, args.source_language, args.target_language, args.output_file)
+    translated = translate(sentences, args.source_language, args.target_language, args.output_file)
     if args.output_format == 'caption':
-        res = [{'image_id': data[i]['image_id'], 'caption': res[i]} for i in range(len(data))]
+        res = [{'image_id': data[i]['image_id'], 'caption': translated[i]} for i in range(len(data))]
     elif args.output_format == 'image':
-        res = [{'image_id': data[i]['image_id'], 'image_path': f'/cs/labs/oabend/uriber/datasets/COCO/train2014/COCO_train2014_{str(data[i]["image_id"]).zfill(12)}.jpg', 'sentences': [{'raw': res[i]}]} for i in range(len(data))]
+        res = [{'image_id': data[i]['image_id'], 'image_path': f'/cs/labs/oabend/uriber/datasets/COCO/train2014/COCO_train2014_{str(data[i]["image_id"]).zfill(12)}.jpg', 'sentences': [{'raw': translated[i]}]} for i in range(len(data))]
     else:
         assert False
     with open(args.output_file + '.json', 'w') as fp:
