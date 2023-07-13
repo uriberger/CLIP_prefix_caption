@@ -2,7 +2,7 @@ from predict import Predictor
 import json
 import time
 import sys
-from flickr30k_utils import get_caption_data, get_test_ids
+from flickr30k_utils import get_caption_data, get_test_ids, get_cn_caption_data, get_multi30k_test_data
 import os
 
 model_name = 'coco'
@@ -31,8 +31,6 @@ if sys.argv[1] == 'COCO':
     res_name = 'COCO'
 elif sys.argv[1] == 'flickr30k':
     # Flickr30k
-    test_ids = get_test_ids()
-    test_ids = {x: True for x in test_ids}
     caption_data = get_caption_data()
     dataset = {}
     for sample in caption_data:
@@ -44,6 +42,28 @@ elif sys.argv[1] == 'flickr30k':
         image_id = sample['image_id']
         dataset[image_id] = image_path
     res_name = 'flickr30k'
+elif sys.argv[1] == 'flickr8kcn':
+    # Flickr8kcn
+    caption_data = get_cn_caption_data()
+    dataset = {}
+    for sample in caption_data:
+        if sample['image_id'] in dataset:
+            continue
+        image_path = '/cs/labs/oabend/uriber/datasets/flickr30/images/' + str(sample['image_id']) + '.jpg'
+        image_id = sample['image_id']
+        dataset[image_id] = image_path
+    res_name = 'flickr8kcn'
+elif sys.argv[1] == 'multi30k':
+    # Flickr8kcn
+    caption_data = get_multi30k_test_data()
+    dataset = {}
+    for sample in caption_data:
+        if sample['image_id'] in dataset:
+            continue
+        image_path = '/cs/labs/oabend/uriber/datasets/flickr30/images/' + str(sample['image_id']) + '.jpg'
+        image_id = sample['image_id']
+        dataset[image_id] = image_path
+    res_name = 'multi30k'
 else:
     if os.path.isdir(sys.argv[1]):
         image_dir_path = sys.argv[1]
@@ -58,8 +78,8 @@ else:
             image_ids = json.load(fp)
         dataset = {}
         for image_id in image_ids:
-            image_dir_path = '/cs/labs/oabend/uriber/datasets/COCO/val2014'
-            file_name = 'COCO_val2014_' + str(image_id).zfill(12) + '.jpg'
+            image_dir_path = '/cs/labs/oabend/uriber/datasets/COCO/train2014'
+            file_name = 'COCO_train2014_' + str(image_id).zfill(12) + '.jpg'
             dataset[image_id] = os.path.join(image_dir_path, file_name)
         res_name = image_ids_file_path.split('/')[-1].split('.')[0]
 
