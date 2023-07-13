@@ -20,12 +20,12 @@ venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR
 echo "$MSG_PREFIX Translation training"
 venv2/bin/python train.py --data ./data/coco/coco_translated_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_translated --epochs 1 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --tokenizer dbmdz/german-gpt2 --gpt2_model dbmdz/german-gpt2
 echo "$MSG_PREFIX Translation inference"
-venv2/bin/python inference.py multi30k ${BASE_DIR}/output/exp_${EXP_IND}_translated/coco_prefix-000.pt
+venv2/bin/python inference.py multi30k ${BASE_DIR}/output/exp_${EXP_IND}_translated/coco_prefix-000.pt dbmdz/german-gpt2
 mv res_multi30k.json ${BASE_DIR}/data/infer/translated_infer_on_test_${EXP_IND}.json
 
 # Reformulation based training
 echo "$MSG_PREFIX Base inference on train"
-venv2/bin/python inference.py ${BASE_DIR}/data/image_ids/image_ids_${EXP_IND}.json ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt
+venv2/bin/python inference.py ${BASE_DIR}/data/image_ids/image_ids_${EXP_IND}.json ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt dbmdz/german-gpt2
 mv res_image_ids_${EXP_IND}.json ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}.json
 echo "$MSG_PREFIX de -> en"
 venv2/bin/python translate.py --source_language de --target_language en --input_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}.json --output_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en
@@ -41,5 +41,5 @@ venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR
 echo "$MSG_PREFIX Reformulations training"
 venv2/bin/python train.py --data ./data/coco/coco_reformulated_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_reformulated --epochs 1 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --tokenizer dbmdz/german-gpt2 --gpt2_model dbmdz/german-gpt2
 echo "$MSG_PREFIX Reformulations inference"
-venv2/bin/python inference.py multi30k ${BASE_DIR}/output/exp_${EXP_IND}_reformulations/coco_prefix-000.pt
+venv2/bin/python inference.py multi30k ${BASE_DIR}/output/exp_${EXP_IND}_reformulations/coco_prefix-000.pt dbmdz/german-gpt2
 mv res_multi30k.json ${BASE_DIR}/data/infer/reformulations_infer_on_test_${EXP_IND}.json

@@ -6,14 +6,15 @@ from flickr30k_utils import get_caption_data, get_test_ids, get_cn_caption_data,
 import os
 
 model_name = 'coco'
-if len(sys.argv) == 2:
-    model_path = 'coco_weights.pt'
+model_path = sys.argv[2]
+if len(sys.argv) == 3:
+    gpt_type='gpt2'
 else:
-    model_path = sys.argv[2]
+    gpt_type = sys.argv[3]
 
 predictor = Predictor()
 print('Setting up predictor...', flush=True)
-predictor.setup(model_name=model_name, model_path=model_path)
+predictor.setup(model_name=model_name, model_path=model_path, gpt_type=gpt_type)
 print('Predictor set up!', flush=True)
 
 if sys.argv[1] == 'COCO':

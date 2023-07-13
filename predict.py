@@ -48,13 +48,13 @@ CPU = torch.device("cpu")
 
 
 class Predictor(cog.Predictor):
-    def setup(self, model_name=None, model_path=None, tokenizer='gpt2'):
+    def setup(self, model_name=None, model_path=None, gpt_type='gpt2'):
         """Load the model into memory to make running multiple predictions efficient"""
         self.device = torch.device("cuda")
         self.clip_model, self.preprocess = clip.load(
             "ViT-B/32", device=self.device, jit=False
         )
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
+        self.tokenizer = AutoTokenizer.from_pretrained(gpt_type)
 
         self.models = {}
         self.prefix_length = 10
@@ -63,7 +63,7 @@ class Predictor(cog.Predictor):
         else:
             model_dict = {model_name: model_path}
         for key, weights_path in model_dict.items():
-            model = ClipCaptionModel(self.prefix_length)
+            model = ClipCaptionModel(self.prefix_length, model_name=gpt_type)
             model.load_state_dict(torch.load(weights_path, map_location=CPU))
             model = model.eval()
             model = model.to(self.device)
