@@ -46,6 +46,8 @@ def translate(sentences, source_language, target_language, output_file, batch_si
         fp.write(json.dumps(res))
     print('Finished!')
 
+    return res
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--source_language', required=True)
@@ -57,4 +59,7 @@ if __name__ == '__main__':
     with open(args.input_file, 'r') as fp:
         data = json.load(fp)
     sentences = [x['caption'] for x in data]    
-    translate(sentences, args.source_language, args.target_language, args.output_file)
+    res = translate(sentences, args.source_language, args.target_language, args.output_file)
+    res = [{'image_id': data[i]['image_id'], 'caption': res[i]} for i in range(len(data))]
+    with open(args.output_file + '.json', 'w') as fp:
+        fp.write(json.dumps(res))
