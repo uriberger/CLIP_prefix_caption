@@ -54,12 +54,18 @@ if __name__ == '__main__':
     parser.add_argument('--target_language', required=True)
     parser.add_argument('--input_file', required=True)
     parser.add_argument('--output_file', required=True)
+    parser.add_argument('--output_format', required=True)
     args = parser.parse_args()
 
     with open(args.input_file, 'r') as fp:
         data = json.load(fp)
     sentences = [x['caption'] for x in data]    
     res = translate(sentences, args.source_language, args.target_language, args.output_file)
-    res = [{'image_id': data[i]['image_id'], 'caption': res[i]} for i in range(len(data))]
+    if args.output_format == 'caption':
+        res = [{'image_id': data[i]['image_id'], 'caption': res[i]} for i in range(len(data))]
+    elif args.output_format == 'image':
+        res = [{'image_id': data[i]['image_id'], 'image_path': f'/cs/labs/oabend/uriber/datasets/COCO/train2014/COCO_train2014_{str(data[i]["image_id"]).zfill(12)}.jpg', 'sentences': [{'raw': res[i]}]} for i in range(len(data))]
+    else:
+        assert False
     with open(args.output_file + '.json', 'w') as fp:
         fp.write(json.dumps(res))

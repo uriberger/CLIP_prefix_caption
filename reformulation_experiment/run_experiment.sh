@@ -28,14 +28,14 @@ echo "$MSG_PREFIX Base inference on train"
 venv2/bin/python inference.py ${BASE_DIR}/data/image_ids/image_ids_${EXP_IND}.json ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt dbmdz/german-gpt2
 mv res_image_ids_${EXP_IND}.json ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}.json
 echo "$MSG_PREFIX de -> en"
-venv2/bin/python translate.py --source_language de --target_language en --input_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}.json --output_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en
+venv2/bin/python translate.py --source_language de --target_language en --input_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}.json --output_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en --output_format caption
 cd ../AliceMind/mPLUG
 echo "$MSG_PREFIX Reformulation"
-venv/bin/python reformulate.py output/vqa_mplug_base/checkpoint_07.pth ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en.json train
+venv/bin/python reformulate.py --model_path output/vqa_mplug_base/checkpoint_07.pth --input_file ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en.json --split train --output_format caption
 mv ann.json ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en_reformulated.json
 cd ../../CLIP_prefix_caption
 echo "$MSG_PREFIX en -> de"
-venv2/bin/python translate.py --source_language en --target_language de --input_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en_reformulated.json --output_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_reformulated
+venv2/bin/python translate.py --source_language en --target_language de --input_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en_reformulated.json --output_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_reformulated --output_format image
 echo "$MSG_PREFIX Reformulations preprocess"
 venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_reformulated.json --output_file coco_reformulated_data_${EXP_IND}
 echo "$MSG_PREFIX Reformulations training"
