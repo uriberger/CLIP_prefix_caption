@@ -26,3 +26,6 @@ for ind in data_inds:
     
 with open(f'reformulation_experiment/data/translated_data/coco_translated_data_{sys.argv[1]}.json', 'w') as fp:
     fp.write(json.dumps(res))
+
+with open(f'reformulation_experiment/data/image_ids/image_ids_{sys.argv[1]}.json', 'w') as fp:
+    fp.write(json.dumps([x['image_id'] for x in res]))
