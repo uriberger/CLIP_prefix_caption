@@ -7,10 +7,10 @@ EXP_IND=0
 
 # Base training on multi30k
 echo "$MSG_PREFIX Base training"
-#venv2/bin/python train.py --data ./data/coco/multi30k.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_base --epochs 10
+venv2/bin/python train.py --data ./data/coco/multi30k.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_base --epochs 10
 echo "$MSG_PREFIX Base inference"
-#venv2/bin/python inference.py multi30k ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt
-#mv res_multi30k.json ${BASE_DIR}/data/infer/base_infer_on_test_${EXP_IND}.json
+venv2/bin/python inference.py multi30k ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt
+mv res_multi30k.json ${BASE_DIR}/data/infer/base_infer_on_test_${EXP_IND}.json
 
 # Translation based training
 echo "$MSG_PREFIX Prepare translation training data"
@@ -18,9 +18,9 @@ venv2/bin/python ${BASE_DIR}/prepare_translation_training_data.py ${EXP_IND}
 echo "$MSG_PREFIX Translation preprocess"
 venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/translated_data/coco_translated_data_${EXP_IND}.json --output_file coco_translated_data_${EXP_IND}
 echo "$MSG_PREFIX Translation training"
-venv2/bin/python train.py --data ./data/coco/coco_translated_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_translated --epochs 10 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base
+venv2/bin/python train.py --data ./data/coco/coco_translated_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_translated --epochs 1 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt
 echo "$MSG_PREFIX Translation inference"
-venv2/bin/python inference.py multi30k ${BASE_DIR}/output/exp_${EXP_IND}_translated/coco_prefix-009.pt
+venv2/bin/python inference.py multi30k ${BASE_DIR}/output/exp_${EXP_IND}_translated/coco_prefix-000.pt
 mv res_multi30k.json ${BASE_DIR}/data/infer/translated_infer_on_test_${EXP_IND}.json
 
 # Reformulation based training
@@ -39,7 +39,7 @@ venv2/bin/python translate.py --source_language en --target_language de --input_
 echo "$MSG_PREFIX Reformulations preprocess"
 venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_reformulated.json --output_file coco_reformulated_data_${EXP_IND}
 echo "$MSG_PREFIX Reformulations training"
-venv2/bin/python train.py --data ./data/coco/coco_reformulated_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_reformulated --epochs 10 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base
+venv2/bin/python train.py --data ./data/coco/coco_reformulated_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_reformulated --epochs 1 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt
 echo "$MSG_PREFIX Reformulations inference"
-venv2/bin/python inference.py multi30k ${BASE_DIR}/output/exp_${EXP_IND}_reformulations/coco_prefix-009.pt
+venv2/bin/python inference.py multi30k ${BASE_DIR}/output/exp_${EXP_IND}_reformulations/coco_prefix-000.pt
 mv res_multi30k.json ${BASE_DIR}/data/infer/reformulations_infer_on_test_${EXP_IND}.json
