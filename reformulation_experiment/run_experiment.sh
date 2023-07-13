@@ -31,7 +31,7 @@ echo "$MSG_PREFIX de -> en"
 venv2/bin/python translate.py --source_language de --target_language en --input_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}.json --output_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en
 cd ../AliceMind/mPLUG
 echo "$MSG_PREFIX Reformulation"
-venv/bin/python reformulate.py output/vqa_mplug_base/checkpoint_07.pth ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en.json
+venv/bin/python reformulate.py output/vqa_mplug_base/checkpoint_07.pth ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en.json train
 mv ann.json ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en_reformulated.json
 cd ../../CLIP_prefix_caption
 echo "$MSG_PREFIX en -> de"
