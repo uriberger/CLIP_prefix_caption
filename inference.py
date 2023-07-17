@@ -34,6 +34,7 @@ elif sys.argv[1] == 'flickr30k':
     # Flickr30k
     caption_data = get_caption_data()
     dataset = {}
+    test_ids = get_test_ids()
     for sample in caption_data:
         if not sample['image_id'] in test_ids:
             continue
