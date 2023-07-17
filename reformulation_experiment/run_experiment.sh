@@ -9,7 +9,7 @@ EXP_IND=0
 echo "$MSG_PREFIX Base training"
 venv2/bin/python train.py --data ./data/coco/multi30k.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_base --epochs 10 --tokenizer dbmdz/german-gpt2 --gpt2_model dbmdz/german-gpt2
 echo "$MSG_PREFIX Base inference"
-venv2/bin/python inference.py multi30k ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt
+venv2/bin/python inference.py multi30k ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt dbmdz/german-gpt2
 mv res_multi30k.json ${BASE_DIR}/data/infer/base_infer_on_test_${EXP_IND}.json
 
 # Translation based training
@@ -31,13 +31,14 @@ echo "$MSG_PREFIX de -> en"
 venv2/bin/python translate.py --source_language de --target_language en --input_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}.json --output_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en --output_format caption
 cd ../AliceMind/mPLUG
 echo "$MSG_PREFIX Reformulation"
-venv/bin/python reformulate.py --model_path output/vqa_mplug_base/checkpoint_07.pth --input_file ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en.json --split train --output_format caption
-mv ann.json ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en_reformulated.json
+venv/bin/python reformulate.py --model_path output/vqa_mplug_base/checkpoint_07.pth --input_file ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en.json --split train --output_format caption --output_file ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en_reformulated
 cd ../../CLIP_prefix_caption
 echo "$MSG_PREFIX en -> de"
 venv2/bin/python translate.py --source_language en --target_language de --input_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_en_reformulated.json --output_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_reformulated --output_format image
+echo "$MSG_PREFIX Reformulations data preperation"
+venv2/bin/python ${BASE_DIR}/prepare_reformulation_training_data.py ${EXP_IND}
 echo "$MSG_PREFIX Reformulations preprocess"
-venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/infer/base_infer_on_train_${EXP_IND}_reformulated.json --output_file coco_reformulated_data_${EXP_IND}
+venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/re_train_data/reformulations_train_data_${EXP_IND}.json --output_file coco_reformulated_data_${EXP_IND}
 echo "$MSG_PREFIX Reformulations training"
 venv2/bin/python train.py --data ./data/coco/coco_reformulated_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_reformulated --epochs 1 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --tokenizer dbmdz/german-gpt2 --gpt2_model dbmdz/german-gpt2
 echo "$MSG_PREFIX Reformulations inference"
