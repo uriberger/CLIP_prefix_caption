@@ -2,7 +2,7 @@
 set -e
 
 MSG_PREFIX=[LOG_MSG]
-BASE_DIR=reformulation_experiment
+BASE_DIR=reformulation_experiment/de
 EXP_IND=0
 
 # Base training on multi30k

@@ -14,6 +14,6 @@ flickr30k_test.txt
 coco-caption/
 train_*/*
 res*.json
-reformulation_experiment/data
-reformulation_experiment/output
+reformulation_experiment/de/data
+reformulation_experiment/de/output
 to_delete
