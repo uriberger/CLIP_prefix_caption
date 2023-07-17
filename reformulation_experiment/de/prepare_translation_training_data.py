@@ -10,7 +10,7 @@ data_inds = [i for i in range(len(coco_en_data)) if coco_en_data[i]['split'] == 
 if sample_num is not None:
     data_inds = random.sample(data_inds, sample_num)
 
-with open('reformulation_experiment/data/translated_data/coco_de_translated_helsinki.json', 'r') as fp:
+with open('reformulation_experiment/de/data/translated_data/coco_de_translated_helsinki.json', 'r') as fp:
     coco_de_data = json.load(fp)
 
 caption_inds = [i for i in range(len(coco_en_data)) for x in coco_en_data[i]['sentences']]
