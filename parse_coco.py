@@ -105,6 +105,33 @@ def create_database_from_image_ids(image_ids_file):
 
     return database
 
+def create_coco_dataset(split):
+    database = []
+    with open('dataset_coco.json', 'r') as f:
+        data = json.load(f)['images']
+    for sample in data:
+        if not sample['split'] == split:
+            continue
+        image_id = sample['cocoid']
+        dirname = sample['filepath']
+        image_id_full_str = str(image_id).zfill(12)
+        filename = f'COCO_{dirname}_{image_id_full_str}.jpg'
+        filepath = f"/cs/labs/oabend/uriber/datasets/COCO/{dirname}/{filename}"
+        assert os.path.isfile(filepath), 'Error: missing file in path ' + filepath
+
+        caption_inds = range(len(sample['sentences']))
+        
+        for caption_ind in caption_inds:
+            sentence = sample['sentences'][caption_ind]
+            res = {}
+            res['image_id'] = image_id
+            res['id'] = sentence['sentid']
+            res['image_path'] = filepath
+            res['caption'] = sentence['raw']
+            database.append(res)
+
+    return database
+
 def create_database_from_json_file(json_file):
     database = []
     with open(json_file, 'r') as f:
@@ -173,16 +200,19 @@ if __name__ == '__main__':
     parser.add_argument('--caption_source', type=str, default='gt', choices=('gt', 'revised'))
     parser.add_argument('--image_ids_file', type=str, default=None)
     parser.add_argument('--json_file', type=str, default=None)
+    parser.add_argument('--coco_split', type=str, default=None)
     parser.add_argument('--output_file', type=str, default='data')
     args = parser.parse_args()
 
-    assert args.csv_file is not None or args.mturk_results_file or args.image_ids_file is not None or args.json_file is not None, 'Error: please provide --csv_file or --mturk_results_file or --image_ids_file or --json_file'
+    assert args.csv_file is not None or args.mturk_results_file or args.image_ids_file is not None or args.json_file is not None or args.coco_split is not None, 'Error: please provide --csv_file or --mturk_results_file or --image_ids_file or --json_file or --coco_split'
     if args.csv_file is not None:
         database = create_database_from_csv(args.csv_file, args.caption_source)
     elif args.mturk_results_file is not None:
         database = create_database_from_mturk(args.mturk_results_file)
     elif args.json_file is not None:
         database = create_database_from_json_file(args.json_file)
+    elif args.coco_split is not None:
+        database = create_coco_dataset(args.coco_split)
     else:
         database = create_database_from_image_ids(args.image_ids_file)
 
