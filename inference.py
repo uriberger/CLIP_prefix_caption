@@ -13,12 +13,13 @@ if __name__ == '__main__':
     parser.add_argument('--split')
     parser.add_argument('--image_dir')
     parser.add_argument('--json_file')
-    parser.add_argument()
+    parser.add_argument('--output_file', required=True)
     args = parser.parse_args()
 
     model_name = 'coco'
     model_path = args.model_path
     gpt_type = args.gpt2_model
+    output_file_name = args.output_file + '.json'
 
     predictor = Predictor()
     print('Setting up predictor...', flush=True)
@@ -65,8 +66,10 @@ if __name__ == '__main__':
             dataset[image_id] = image_path
         res_name = 'flickr8kcn'
     elif args.dataset == 'multi30k':
+        assert args.split is not None, 'Please specify a split'
         # Multi30k
-        caption_data = get_multi30k_test_data()
+        with open(f'multi30k_{args.split}_data.json', 'r') as fp:
+            caption_data = json.load(fp)
         dataset = {}
         for sample in caption_data:
             if sample['image_id'] in dataset:
@@ -106,13 +109,13 @@ if __name__ == '__main__':
             time_from_prev = time.time() - prev_checkpoint
             prev_checkpoint = time.time()
             print('\tStarting sample ' + str(count) + ' out of ' + str(len(dataset)) + ', time from prev ' + str(time_from_prev), flush=True)
-            with open('res_' + res_name + '.json', 'w') as fp:
+            with open(output_file_name, 'w') as fp:
                 json.dump(res, fp)
         count += 1
         generated_caption = predictor.predict(image=image_path, model=model_name, use_beam_search=True)
         res.append({'image_id': image_id, 'caption': generated_caption, 'id': count})
 
-    with open('res_' + res_name + '.json',  'w') as fp:
+    with open(output_file_name,  'w') as fp:
         json.dump(res, fp)
 
     print('Finished!')
