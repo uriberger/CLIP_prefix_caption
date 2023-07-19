@@ -2,6 +2,7 @@ from predict import Predictor
 import json
 import time
 from flickr30k_utils import get_caption_data, get_test_ids, get_cn_caption_data, get_multi30k_test_data
+from pascal_utils import get_caption_data as get_pascal_caption_data
 import os
 import argparse
 
@@ -39,7 +40,6 @@ if __name__ == '__main__':
             image_path = '/cs/labs/oabend/uriber/datasets/COCO/' + sample['filepath'] + '/' + sample['filename']
             image_id = sample['cocoid']
             dataset[image_id] = image_path
-        res_name = 'COCO'
     elif args.dataset == 'flickr30k':
         assert args.split is not None, 'Please specify a split'
         # Flickr30k
@@ -53,7 +53,11 @@ if __name__ == '__main__':
             image_path = '/cs/labs/oabend/uriber/datasets/flickr30/images/' + str(sample['image_id']) + '.jpg'
             image_id = sample['image_id']
             dataset[image_id] = image_path
-        res_name = 'flickr30k'
+    elif args.dataset == 'pascal':
+        caption_data = get_pascal_caption_data()
+        dataset = {}
+        for sample in caption_data:
+            dataset[sample['image_id']] = sample['image_path']
     elif args.dataset == 'flickr8kcn':
         # Flickr8kcn
         caption_data = get_cn_caption_data()
@@ -64,7 +68,6 @@ if __name__ == '__main__':
             image_path = '/cs/labs/oabend/uriber/datasets/flickr30/images/' + str(sample['image_id']) + '.jpg'
             image_id = sample['image_id']
             dataset[image_id] = image_path
-        res_name = 'flickr8kcn'
     elif args.dataset == 'multi30k':
         assert args.split is not None, 'Please specify a split'
         # Multi30k
@@ -77,14 +80,12 @@ if __name__ == '__main__':
             image_path = '/cs/labs/oabend/uriber/datasets/flickr30/images/' + str(sample['image_id']) + '.jpg'
             image_id = sample['image_id']
             dataset[image_id] = image_path
-        res_name = 'multi30k'
     elif args.image_dir is not None:
         image_dir_path = args.image_dir
         dataset = {}
         for file_name in os.listdir(image_dir_path):
             image_id = int(file_name.split('_')[0])
             dataset[image_id] = os.path.join(image_dir_path, file_name)
-        res_name = image_dir_path.split('/')[-1]
     elif args.json_file is not None:
         image_ids_file_path = args.json_file
         with open(image_ids_file_path, 'r') as fp:
@@ -94,7 +95,6 @@ if __name__ == '__main__':
             image_dir_path = '/cs/labs/oabend/uriber/datasets/COCO/train2014'
             file_name = 'COCO_train2014_' + str(image_id).zfill(12) + '.jpg'
             dataset[image_id] = os.path.join(image_dir_path, file_name)
-        res_name = image_ids_file_path.split('/')[-1].split('.')[0]
     else:
         assert False
 
