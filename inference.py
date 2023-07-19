@@ -27,7 +27,20 @@ if __name__ == '__main__':
     predictor.setup(model_name=model_name, model_path=model_path, gpt_type=gpt_type)
     print('Predictor set up!', flush=True)
 
-    if args.dataset == 'COCO':
+    if args.json_file is not None:
+        image_ids_file_path = args.json_file
+        with open(image_ids_file_path, 'r') as fp:
+            image_ids = json.load(fp)
+        dataset = {}
+        for image_id in image_ids:
+            if args.dataset == 'COCO':
+                image_dir_path = '/cs/labs/oabend/uriber/datasets/COCO/train2014'
+                file_name = 'COCO_train2014_' + str(image_id).zfill(12) + '.jpg'
+            elif args.dataset == 'flickr30k':
+                image_dir_path = '/cs/labs/oabend/uriber/datasets/flickr30/images'
+                file_name = f'{image_id}.jpg'
+            dataset[image_id] = os.path.join(image_dir_path, file_name)
+    elif args.dataset == 'COCO':
         assert args.split is not None, 'Please specify a split'
         # COCO Karpathy split
         with open('dataset_coco.json', 'r') as fp:
@@ -85,15 +98,6 @@ if __name__ == '__main__':
         dataset = {}
         for file_name in os.listdir(image_dir_path):
             image_id = int(file_name.split('_')[0])
-            dataset[image_id] = os.path.join(image_dir_path, file_name)
-    elif args.json_file is not None:
-        image_ids_file_path = args.json_file
-        with open(image_ids_file_path, 'r') as fp:
-            image_ids = json.load(fp)
-        dataset = {}
-        for image_id in image_ids:
-            image_dir_path = '/cs/labs/oabend/uriber/datasets/COCO/train2014'
-            file_name = 'COCO_train2014_' + str(image_id).zfill(12) + '.jpg'
             dataset[image_id] = os.path.join(image_dir_path, file_name)
     else:
         assert False
