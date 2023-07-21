@@ -34,8 +34,9 @@ if __name__ == '__main__':
         dataset = {}
         for image_id in image_ids:
             if args.dataset == 'COCO':
-                image_dir_path = '/cs/labs/oabend/uriber/datasets/COCO/train2014'
-                file_name = 'COCO_train2014_' + str(image_id).zfill(12) + '.jpg'
+                assert args.split is not None, 'Please specify a split'
+                image_dir_path = f'/cs/labs/oabend/uriber/datasets/COCO/{args.split}2014'
+                file_name = f'COCO_{args.split}2014_{str(image_id).zfill(12)}.jpg'
             elif args.dataset == 'flickr30k':
                 image_dir_path = '/cs/labs/oabend/uriber/datasets/flickr30/images'
                 file_name = f'{image_id}.jpg'
