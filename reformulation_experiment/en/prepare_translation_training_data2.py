@@ -16,6 +16,3 @@ for image_id, captions in image_id_to_captions.items():
     
 with open(f'reformulation_experiment/en/data/translated_data/stair_val_translated_data_{sys.argv[1]}.json', 'w') as fp:
     fp.write(json.dumps(res))
-
-with open(f'reformulation_experiment/en/data/image_ids/image_ids_2.{sys.argv[1]}.json', 'w') as fp:
-    fp.write(json.dumps([x['image_id'] for x in res]))
