@@ -14,5 +14,5 @@ res = []
 for image_id, captions in image_id_to_captions.items():
     res.append({'image_id': image_id, 'image_path': f'/cs/labs/oabend/uriber/datasets/COCO/val2014/COCO_val2014_{str(image_id).zfill(12)}.jpg', 'sentences': [{'raw': random.choice(captions)}]})
     
-with open(f'reformulation_experiment/en/data/translated_data/stair_val_translated_data_{sys.argv[1]}.json', 'w') as fp:
+with open(f'reformulation_experiment/en/data/translated_data/coco_val_translated_data_{sys.argv[1]}.json', 'w') as fp:
     fp.write(json.dumps(res))
