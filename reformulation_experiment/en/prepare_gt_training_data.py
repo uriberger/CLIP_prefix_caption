@@ -2,7 +2,7 @@ import json
 import sys
 import random
 
-with open(f'reformulation_experiment/en/data/image_ids/val_image_ids_{sys.argv[1]}.json', 'w') as fp:
+with open(f'reformulation_experiment/en/data/image_ids/val_image_ids_{sys.argv[1]}.json', 'r') as fp:
     image_ids = json.load(fp)
 image_ids_dict = {x: True for x in image_ids}
 

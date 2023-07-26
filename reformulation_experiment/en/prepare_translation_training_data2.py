@@ -6,13 +6,13 @@ from collections import defaultdict
 with open('reformulation_experiment/en/data/translated_data/stair_captions_en_translated_helsinki.json', 'r') as fp:
     stair_en_data = json.load(fp)
 
-with open(f'reformulation_experiment/en/data/image_ids/val_image_ids_{sys.argv[1]}.json', 'w') as fp:
+with open(f'reformulation_experiment/en/data/image_ids/val_image_ids_{sys.argv[1]}.json', 'r') as fp:
     image_ids = json.load(fp)
 image_ids_dict = {x: True for x in image_ids}
 
 image_id_to_captions = defaultdict(list)
 for sample in stair_en_data:
-    if image_id in image_ids_dict:
+    if sample['image_id'] in image_ids_dict:
         image_id_to_captions[sample['image_id']].append(sample['caption'])
 
 image_id_to_split = {}

@@ -28,15 +28,22 @@ if __name__ == '__main__':
     print('Predictor set up!', flush=True)
 
     if args.json_file is not None:
+        if args.dataset == 'COCO':
+            image_id_to_split = {}
+            with open('dataset_coco.json', 'r') as fp:
+                coco_data = json.load(fp)['images']
+                for sample in coco_data:
+                    image_id = sample['cocoid']
+                    image_id_to_split[image_id] = sample['filepath'].split('2014')[0]
         image_ids_file_path = args.json_file
         with open(image_ids_file_path, 'r') as fp:
             image_ids = json.load(fp)
         dataset = {}
         for image_id in image_ids:
             if args.dataset == 'COCO':
-                assert args.split is not None, 'Please specify a split'
-                image_dir_path = f'/cs/labs/oabend/uriber/datasets/COCO/{args.split}2014'
-                file_name = f'COCO_{args.split}2014_{str(image_id).zfill(12)}.jpg'
+                split = image_id_to_split[image_id]
+                image_dir_path = f'/cs/labs/oabend/uriber/datasets/COCO/{split}2014'
+                file_name = f'COCO_{split}2014_{str(image_id).zfill(12)}.jpg'
             elif args.dataset == 'flickr30k':
                 image_dir_path = '/cs/labs/oabend/uriber/datasets/flickr30/images'
                 file_name = f'{image_id}.jpg'

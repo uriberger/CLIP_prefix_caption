@@ -57,7 +57,7 @@ venv2/bin/python inference.py --dataset COCO --model_path ${BASE_DIR}/output/exp
 # Reformulations based training
 cd ../AliceMind/mPLUG
 echo "$MSG_PREFIX Reformulation"
-venv/bin/python reformulate.py --model_path output/vqa_mplug_base/checkpoint_07.pth --input_file ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_val_${EXP_IND}.json --split val --output_format caption --output_file ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_val_${EXP_IND}_reformulated --dataset COCO
+venv/bin/python reformulate.py --model_path output/vqa_mplug_base/checkpoint_07.pth --input_file ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_val_${EXP_IND}.json --output_format caption --output_file ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_val_${EXP_IND}_reformulated --dataset COCO
 cd ../../CLIP_prefix_caption
 echo "$MSG_PREFIX Reformulations data preperation"
 venv2/bin/python ${BASE_DIR}/prepare_reformulation_training_data2.py ${EXP_IND}

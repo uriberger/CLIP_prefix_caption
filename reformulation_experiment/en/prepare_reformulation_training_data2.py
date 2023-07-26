@@ -16,5 +16,5 @@ for sample in data:
     split = image_id_to_split[image_id]
     res.append({'image_id': image_id, 'image_path': f'/cs/labs/oabend/uriber/datasets/COCO/{split}2014/COCO_{split}2014_{str(image_id).zfill(12)}.jpg', 'sentences': [{'raw': sample['caption']}]})
     
-with open(f'reformulation_experiment/en/data/re_train_data/reformulations_train_data.{sys.argv[1]}.json', 'w') as fp:
+with open(f'reformulation_experiment/en/data/re_train_data/reformulations_train_data_{sys.argv[1]}.json', 'w') as fp:
     fp.write(json.dumps(res))
