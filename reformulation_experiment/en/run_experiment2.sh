@@ -4,7 +4,7 @@ set -e
 MSG_PREFIX=[LOG_MSG]
 BASE_DIR=reformulation_experiment/en
 EXP_IND=0
-SAMPLE_NUM=40000
+SAMPLE_NUM=10000
 
 # Base training
 echo "$MSG_PREFIX Prepare base training data"
@@ -13,6 +13,7 @@ echo "$MSG_PREFIX base preprocess"
 venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/base_train_data/coco_train_data_${EXP_IND}.json --output_file coco_train_data_${EXP_IND}
 echo "$MSG_PREFIX Base training"
 venv2/bin/python train.py --data ./data/coco/coco_train_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_base --epochs 10
+rm -f data/coco/coco_train_data_${EXP_IND}_tokens.pkl
 echo "$MSG_PREFIX Base inference"
 venv2/bin/python inference.py --dataset COCO --model_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --split test --output_file ${BASE_DIR}/data/infer/base_infer_on_test_${EXP_IND}
 
@@ -21,6 +22,7 @@ echo "$MSG_PREFIX Prepare GT training data"
 venv2/bin/python ${BASE_DIR}/prepare_gt_training_data.py ${EXP_IND}
 echo "$MSG_PREFIX GT preprocess"
 venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/gt_train_data/coco_val_data_${EXP_IND}.json --output_file coco_val_data_${EXP_IND}
+rm -f data/coco/coco_val_data_${EXP_IND}_tokens.pkl
 echo "$MSG_PREFIX GT training"
 venv2/bin/python train.py --data ./data/coco/coco_val_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_gt --epochs 5 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt
 echo "$MSG_PREFIX GT inference 1 epoch"
@@ -33,6 +35,7 @@ echo "$MSG_PREFIX Prepare translation training data"
 venv2/bin/python ${BASE_DIR}/prepare_translation_training_data2.py ${EXP_IND}
 echo "$MSG_PREFIX Translation preprocess"
 venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/translated_train_data/coco_val_translated_data_${EXP_IND}.json --output_file coco_val_translated_data_${EXP_IND}
+rm -f data/coco/coco_val_translated_data_${EXP_IND}_tokens.pkl
 echo "$MSG_PREFIX Translation training"
 venv2/bin/python train.py --data ./data/coco/coco_val_translated_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_translated --epochs 5 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt
 echo "$MSG_PREFIX Translation inference 1 epoch"
@@ -47,6 +50,7 @@ echo "$MSG_PREFIX Own data preperation"
 venv2/bin/python ${BASE_DIR}/prepare_own_training_data.py ${EXP_IND}
 echo "$MSG_PREFIX Own captions preprocess"
 venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/own_train_data/own_train_data_${EXP_IND}.json --output_file coco_val_generated_data_${EXP_IND}
+rm -f data/coco/coco_val_generated_data_${EXP_IND}_tokens.pkl
 echo "$MSG_PREFIX Own captions training"
 venv2/bin/python train.py --data ./data/coco/coco_val_generated_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_2.${EXP_IND}_own --epochs 5 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt
 echo "$MSG_PREFIX Own captions inference 1 epoch"
@@ -63,6 +67,7 @@ echo "$MSG_PREFIX Reformulations data preperation"
 venv2/bin/python ${BASE_DIR}/prepare_reformulation_training_data2.py ${EXP_IND}
 echo "$MSG_PREFIX Reformulations preprocess"
 venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/re_train_data/reformulations_train_data_${EXP_IND}.json --output_file coco_val_reformulated_data_${EXP_IND}
+rm -f data/coco/coco_val_reformulated_data_${EXP_IND}_tokens.pkl
 echo "$MSG_PREFIX Reformulations training"
 venv2/bin/python train.py --data ./data/coco/coco_val_reformulated_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_reformulated --epochs 5 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt
 echo "$MSG_PREFIX Reformulations inference 1 epoch"
