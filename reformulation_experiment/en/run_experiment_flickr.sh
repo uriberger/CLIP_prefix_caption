@@ -11,9 +11,9 @@ echo "$MSG_PREFIX Prepare base training data"
 venv2/bin/python ${BASE_DIR}/prepare_base_training_data_flickr.py ${EXP_IND} ${SAMPLE_NUM}
 echo "$MSG_PREFIX base preprocess"
 venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/base_train_data/flickr_train_data_${EXP_IND}.json --output_file flickr_train_data_${EXP_IND}
+rm -f data/coco/flickr_train_data_${EXP_IND}_tokens.pkl
 echo "$MSG_PREFIX Base training"
 venv2/bin/python train.py --data ./data/coco/flickr_train_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_base --epochs 10
-rm -f data/coco/flickr_train_data_${EXP_IND}_tokens.pkl
 echo "$MSG_PREFIX Base inference"
 venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --split test --output_file ${BASE_DIR}/data/infer/base_infer_on_test_${EXP_IND}
 
