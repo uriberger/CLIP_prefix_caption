@@ -17,7 +17,6 @@ for sample in stair_en_data:
 
 res = []
 for image_id, captions in image_id_to_captions.items():
-    split = image_id_to_split[image_id]
     res.append({'image_id': image_id, 'image_path': f'/cs/labs/oabend/uriber/datasets/flickr30/images/{image_id}.jpg', 'sentences': [{'raw': random.choice(captions)}]})
     
 with open(f'reformulation_experiment/en/data/translated_train_data/flickr_val_translated_data_{sys.argv[1]}.json', 'w') as fp:
