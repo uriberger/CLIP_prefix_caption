@@ -71,7 +71,7 @@ if __name__ == '__main__':
         for sample in data['images']:
             if not sample['split'] == args.split:
                 continue
-            image_path = 'f/cs/labs/oabend/uriber/datasets/flickr30/images/{sample["filename"]}'
+            image_path = f'/cs/labs/oabend/uriber/datasets/flickr30/images/{sample["filename"]}'
             image_id = int(sample['filename'].split('.jpg')[0])
             dataset[image_id] = image_path
     elif args.dataset == 'pascal':
