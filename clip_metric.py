@@ -24,6 +24,8 @@ elif dataset_name == 'pascal':
             image_id = int(file_name.split('2008_')[1].split('.jpg')[0])
             image_id_to_path_dict[image_id] = os.path.join(dir_path, file_name)
     image_id_to_path = lambda image_id: image_id_to_path_dict[image_id]
+elif dataset_name == 'flickr30k':
+    image_id_to_path = lambda image_id: f'/cs/labs/oabend/uriber/datasets/flickr30/images/{image_id}.jpg'
 else:
     assert False, 'Unknown dataset ' + dataset_name
 
