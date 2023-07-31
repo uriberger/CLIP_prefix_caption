@@ -3,7 +3,7 @@ set -e
 
 MSG_PREFIX=[LOG_MSG]
 BASE_DIR=reformulation_experiment/de
-EXP_IND=2
+EXP_IND=0
 SAMPLE_NUM=20000
 
 # Base training
@@ -59,15 +59,15 @@ echo "$MSG_PREFIX Own captions inference 5 epochs"
 venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_own/coco_prefix-004.pt --split test --output_file ${BASE_DIR}/data/infer/own_infer_on_test_${EXP_IND}_5_epoch --gpt2_model dbmdz/german-gpt2
 
 # Reformulations based training
-cd ../AliceMind/mPLUG
 echo "$MSG_PREFIX de->en"
-venv2/bin/python translate.py --input_file ${BASE_DIR}/data/infer/base_infer_on_val_${EXP_IND}.json --output_file ${BASE_DIR}/data/infer/base_infer_on_val_${EXP_IND}_en_translated --source_langauge de --target_language en --output_format caption
+venv2/bin/python translate.py --input_file ${BASE_DIR}/data/infer/base_infer_on_val_${EXP_IND}.json --output_file ${BASE_DIR}/data/infer/base_infer_on_val_${EXP_IND}_en_translated --source_language de --target_language en --output_format caption
 echo "$MSG_PREFIX Reformulation"
+cd ../AliceMind/mPLUG
 rm -f ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_val_${EXP_IND}_en_reformulated.json
 venv/bin/python reformulate.py --model_path output/vqa_mplug_base/checkpoint_07.pth --input_file ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_val_${EXP_IND}_en_translated.json --output_format caption --output_file ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_val_${EXP_IND}_en_reformulated --dataset flickr30k
 cd ../../CLIP_prefix_caption
 echo "$MSG_PREFIX en->de"
-venv2/bin/python translate.py --input_file ${BASE_DIR}/data/infer/base_infer_on_val_${EXP_IND}_en_reformulated.json --output_file ${BASE_DIR}/data/infer/base_infer_on_val_${EXP_IND}_reformulated --source_langauge en --target_language de --output_format caption
+venv2/bin/python translate.py --input_file ${BASE_DIR}/data/infer/base_infer_on_val_${EXP_IND}_en_reformulated.json --output_file ${BASE_DIR}/data/infer/base_infer_on_val_${EXP_IND}_reformulated --source_language en --target_language de --output_format caption
 echo "$MSG_PREFIX Reformulations data preperation"
 venv2/bin/python ${BASE_DIR}/prepare_reformulation_training_data.py ${EXP_IND}
 echo "$MSG_PREFIX Reformulations preprocess"
