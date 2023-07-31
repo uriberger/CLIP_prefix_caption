@@ -15,7 +15,7 @@ venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR
 echo "$MSG_PREFIX Base training"
 venv2/bin/python train.py --data ./data/coco/stair_train_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_base --epochs 10 --tokenizer rinna/japanese-gpt2-small --gpt2_model rinna/japanese-gpt2-small
 echo "$MSG_PREFIX Base inference"
-venv2/bin/python inference.py --dataset COCO --model_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --split test --output_file ${BASE_DIR}/data/infer/base_infer_on_test_${EXP_IND}
+venv2/bin/python inference.py --dataset COCO --model_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --split test --output_file ${BASE_DIR}/data/infer/base_infer_on_test_${EXP_IND} --gpt2_model rinna/japanese-gpt2-small
 
 # GT based training
 echo "$MSG_PREFIX Prepare GT training data"
