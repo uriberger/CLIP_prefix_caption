@@ -13,17 +13,18 @@ with open('/cs/labs/oabend/uriber/datasets/STAIR-captions/stair_captions_v1.2_va
     val_data = json.load(fp)['annotations']
 
 image_id_to_captions = defaultdict(list)
-image_id_to_split = {}
     
 gt_data_train = [x for x in train_data if x['image_id'] in image_ids_dict]
 for x in gt_data_train:
     image_id_to_captions[x['image_id']].append(x['caption'])
-    image_id_to_split[x['image_id']] = 'train'
 
 gt_data_val = [x for x in val_data if x['image_id'] in image_ids_dict]
 for x in gt_data_train:
     image_id_to_captions[x['image_id']].append(x['caption'])
-    image_id_to_split[x['image_id']] = 'val'
+
+with open('dataset_coco.json', 'r') as fp:
+    coco_data = json.load(fp)['images']
+image_id_to_split = {x['cocoid']: x['filepath'].split('2014')[0] for x in coco_data}
 
 res = []
 for x in image_id_to_captions.items():

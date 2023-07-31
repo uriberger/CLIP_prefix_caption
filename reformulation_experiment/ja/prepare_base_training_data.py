@@ -14,7 +14,7 @@ with open('/cs/labs/oabend/uriber/datasets/STAIR-captions/stair_captions_v1.2_va
 with open('dataset_coco.json', 'r') as fp:
     coco_data = json.load(fp)['images']
 train_image_ids = [x['cocoid'] for x in coco_data if x['split'] == 'train']
-chosen_image_ids = random.sample(all_image_ids, train_sample_num)
+chosen_image_ids = random.sample(train_image_ids, train_sample_num)
 image_ids_dict = {x: True for x in chosen_image_ids}
 cur_train_data = [x for x in train_data if x['image_id'] in image_ids_dict]
 
