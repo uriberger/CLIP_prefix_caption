@@ -9,7 +9,7 @@ import argparse
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path', required=True)
-    parser.add_argument('--gpt2_model', default='gpt2')
+    parser.add_argument('--gpt_model', default='gpt2')
     parser.add_argument('--dataset')
     parser.add_argument('--split')
     parser.add_argument('--image_dir')
@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     model_name = 'coco'
     model_path = args.model_path
-    gpt_type = args.gpt2_model
+    gpt_type = args.gpt_model
     output_file_name = args.output_file + '.json'
 
     predictor = Predictor()

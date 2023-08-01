@@ -15,7 +15,9 @@ from transformers import (
     GPT2LMHeadModel,
     AdamW,
     get_linear_schedule_with_warmup,
-    AutoTokenizer
+    AutoTokenizer,
+    GPTNeoXJapaneseForCausalLM,
+    GPTSanJapaneseForConditionalGeneration
 )
 import skimage.io as io
 import PIL.Image
@@ -135,7 +137,12 @@ class ClipCaptionModel(nn.Module):
     def forward(
         self, tokens: T, prefix: T, mask: Optional[T] = None, labels: Optional[T] = None
     ):
-        embedding_text = self.gpt.transformer.wte(tokens)
+        if self.model_name == 'abeja/gpt-neox-japanese-2.7b':
+            embedding_text = self.gpt.gpt_neox_japanese.embed_in(tokens)
+        elif self.model_name == 'Tanrei/GPTSAN-japanese':
+            embedding_text = self.gpt.model.embed_tokens(tokens)
+        else:
+            embedding_text = self.gpt.transformer.wte(tokens)
         prefix_projections = self.clip_project(prefix).view(
             -1, self.prefix_length, self.gpt_embedding_size
         )
@@ -151,8 +158,16 @@ class ClipCaptionModel(nn.Module):
     def __init__(self, prefix_length: int, prefix_size: int = 512, model_name: str = 'gpt2'):
         super(ClipCaptionModel, self).__init__()
         self.prefix_length = prefix_length
-        self.gpt = GPT2LMHeadModel.from_pretrained(model_name)
-        self.gpt_embedding_size = self.gpt.transformer.wte.weight.shape[1]
+        if model_name == 'abeja/gpt-neox-japanese-2.7b':
+            self.gpt = GPTNeoXJapaneseForCausalLM.from_pretrained(model_name)
+            self.gpt_embedding_size = self.gpt.gpt_neox_japanese.embed_in.shape[1]
+        elif model_name == 'Tanrei/GPTSAN-japanese':
+            self.gpt = GPTSanJapaneseForConditionalGeneration(model_name)
+            self.gpt_embedding_size = self.gpt.model.embed_tokens.shape[1]
+        else:
+            self.gpt = GPT2LMHeadModel.from_pretrained(model_name)
+            self.gpt_embedding_size = self.gpt.transformer.wte.weight.shape[1]
+        self.model_name = model_name
         if prefix_length > 10:  # not enough memory
             self.clip_project = nn.Linear(
                 prefix_size, self.gpt_embedding_size * prefix_length
