@@ -101,6 +101,15 @@ if __name__ == '__main__':
             image_path = '/cs/labs/oabend/uriber/datasets/flickr30/images/' + str(sample['image_id']) + '.jpg'
             image_id = sample['image_id']
             dataset[image_id] = image_path
+    elif args.dataset == 'aic':
+        # AIChallenger
+        with open('../coco-caption/annotations/aic_test_gt.json', 'r') as fp:
+            aic_data = json.load(fp)['images']
+        dataset = {}
+        for sample in aic_data:
+            image_path = f'/cs/labs/oabend/uriber/datasets/ai_challenger/ai_challenger_caption_validation_20170910/caption_validation_images_20170910/{sample["file_name"]}'
+            image_id = sample['id']
+            dataset[image_id] = image_path
     elif args.image_dir is not None:
         image_dir_path = args.image_dir
         dataset = {}
