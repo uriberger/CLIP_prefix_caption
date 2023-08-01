@@ -18,3 +18,5 @@ reformulation_experiment/*/data
 reformulation_experiment/*/output
 multi30k_*_data.json
 to_delete
+generalization_experiment/data
+generalization_experiment/output
