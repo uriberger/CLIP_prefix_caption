@@ -334,6 +334,9 @@ def train(dataset: ClipCocoDataset, model: ClipCaptionModel, args, val_dataset,
                     model.state_dict(),
                     os.path.join(output_dir, f"{output_prefix}_latest.pt"),
                 )
+            if args.steps_evaluation != -1 and idx % args.steps_evaluation == 0:
+                eval_res = evaluate_model(model, val_dataset, device, output_dir, f'{epoch}.{idx}')
+                train_log.write(str(eval_res) + '\n')    
         progress.close()
         if epoch % args.save_every == 0 or epoch == epochs - 1:
             torch.save(
@@ -428,6 +431,7 @@ def main():
     parser.add_argument('--normalize_prefix', dest='normalize_prefix', action='store_true')
     parser.add_argument('--load_model_from_path', type=str, default=None)
     parser.add_argument('--epoch_evaluation', action='store_true')
+    parser.add_argument('--steps_evaluation', type=int, default=-1)
     parser.add_argument('--validation_set_path', type=str, default=None)
     parser.add_argument('--tokenizer', type=str, default='gpt2')
     parser.add_argument('--gpt2_model', type=str, default='gpt2')
