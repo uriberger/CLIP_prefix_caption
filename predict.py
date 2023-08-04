@@ -15,8 +15,7 @@ from transformers import (
     GPT2LMHeadModel,
     AdamW,
     get_linear_schedule_with_warmup,
-    AutoTokenizer,
-    MT5ForConditionalGeneration
+    AutoTokenizer
 )
 import skimage.io as io
 import PIL.Image
@@ -49,23 +48,22 @@ CPU = torch.device("cpu")
 
 
 class Predictor(cog.Predictor):
-    def setup(self, model_name=None, model_path=None, model_type='gpt2'):
+    def setup(self, model_name=None, model_path=None, gpt_type='gpt2'):
         """Load the model into memory to make running multiple predictions efficient"""
         self.device = torch.device("cuda")
         self.clip_model, self.preprocess = clip.load(
             "ViT-B/32", device=self.device, jit=False
         )
-        self.tokenizer = AutoTokenizer.from_pretrained(model_type)
+        self.tokenizer = AutoTokenizer.from_pretrained(gpt_type)
 
         self.models = {}
         self.prefix_length = 10
-        self.model_type = model_type
         if model_name is None:
             model_dict = WEIGHTS_PATHS
         else:
             model_dict = {model_name: model_path}
         for key, weights_path in model_dict.items():
-            model = ClipCaptionModel(self.prefix_length, model_name=model_type)
+            model = ClipCaptionModel(self.prefix_length, model_name=gpt_type)
             model.load_state_dict(torch.load(weights_path, map_location=CPU))
             model = model.eval()
             model = model.to(self.device)
@@ -107,13 +105,7 @@ class Predictor(cog.Predictor):
             )
             prefix_embed = model.clip_project(prefix).reshape(1, self.prefix_length, -1)
         if use_beam_search:
-            if 'google/mt' in self.model_type:
-                model.eval()
-                output = model.language_backbone.generate(inputs_embeds=prefix_embed, num_beams=5, num_return_sequences=5)
-                output_texts = self.tokenizer.decode(output[0], skip_special_tokens=True)
-                return output_texts
-            else:
-                return generate_beam(model, self.tokenizer, embed=prefix_embed)[0]
+            return generate_beam(model, self.tokenizer, embed=prefix_embed)[0]
         else:
             return generate2(model, self.tokenizer, embed=prefix_embed)
 
@@ -143,42 +135,34 @@ class ClipCaptionModel(nn.Module):
     def forward(
         self, tokens: T, prefix: T, mask: Optional[T] = None, labels: Optional[T] = None
     ):
+        embedding_text = self.gpt.transformer.wte(tokens)
         prefix_projections = self.clip_project(prefix).view(
-            -1, self.prefix_length, self.language_embedding_size
+            -1, self.prefix_length, self.gpt_embedding_size
         )
-        if 'google/mt5' in self.model_name:
-            out = self.language_backbone(inputs_embeds=prefix_projections, labels=tokens, attention_mask=mask)
-        else:
-            embedding_text = self.language_backbone.transformer.wte(tokens)
-            # print(embedding_text.size()) #torch.Size([5, 67, 768])
-            # print(prefix_projections.size()) #torch.Size([5, 1, 768])
-            embedding_cat = torch.cat((prefix_projections, embedding_text), dim=1)
-            if labels is not None:
-                dummy_token = self.get_dummy_token(tokens.shape[0], tokens.device)
-                labels = torch.cat((dummy_token, tokens), dim=1)
-            out = self.language_backbone(inputs_embeds=embedding_cat, labels=labels, attention_mask=mask)
+        # print(embedding_text.size()) #torch.Size([5, 67, 768])
+        # print(prefix_projections.size()) #torch.Size([5, 1, 768])
+        embedding_cat = torch.cat((prefix_projections, embedding_text), dim=1)
+        if labels is not None:
+            dummy_token = self.get_dummy_token(tokens.shape[0], tokens.device)
+            labels = torch.cat((dummy_token, tokens), dim=1)
+        out = self.gpt(inputs_embeds=embedding_cat, labels=labels, attention_mask=mask)
         return out
 
     def __init__(self, prefix_length: int, prefix_size: int = 512, model_name: str = 'gpt2'):
         super(ClipCaptionModel, self).__init__()
         self.prefix_length = prefix_length
-        if 'google/mt5' in model_name:
-            self.language_backbone = MT5ForConditionalGeneration.from_pretrained(model_name)
-            self.language_embedding_size = self.language_backbone.encoder.embed_tokens.weight.shape[1]
-        else:
-            self.language_backbone = GPT2LMHeadModel.from_pretrained(model_name)
-            self.language_embedding_size = self.language_backbone.transformer.wte.weight.shape[1]
-        self.model_name = model_name
+        self.gpt = GPT2LMHeadModel.from_pretrained(model_name)
+        self.gpt_embedding_size = self.gpt.transformer.wte.weight.shape[1]
         if prefix_length > 10:  # not enough memory
             self.clip_project = nn.Linear(
-                prefix_size, self.language_embedding_size * prefix_length
+                prefix_size, self.gpt_embedding_size * prefix_length
             )
         else:
             self.clip_project = MLP(
                 (
                     prefix_size,
-                    (self.language_embedding_size * prefix_length) // 2,
-                    self.language_embedding_size * prefix_length,
+                    (self.gpt_embedding_size * prefix_length) // 2,
+                    self.gpt_embedding_size * prefix_length,
                 )
             )
 
@@ -189,7 +173,7 @@ class ClipCaptionPrefix(ClipCaptionModel):
 
     def train(self, mode: bool = True):
         super(ClipCaptionPrefix, self).train(mode)
-        self.language_backbone.eval()
+        self.gpt.eval()
         return self
 
 
@@ -218,9 +202,9 @@ def generate_beam(
             if tokens is None:
                 tokens = torch.tensor(tokenizer.encode(prompt))
                 tokens = tokens.unsqueeze(0).to(device)
-                generated = model.language_backbone.transformer.wte(tokens)
+                generated = model.gpt.transformer.wte(tokens)
         for i in range(entry_length):
-            outputs = model.language_backbone(inputs_embeds=generated)
+            outputs = model.gpt(inputs_embeds=generated)
             logits = outputs.logits
             logits = logits[:, -1, :] / (temperature if temperature > 0 else 1.0)
             logits = logits.softmax(-1).log()
@@ -251,7 +235,7 @@ def generate_beam(
                 generated = generated[next_tokens_source]
                 scores = scores_sum_average * seq_lengths
                 is_stopped = is_stopped[next_tokens_source]
-            next_token_embed = model.language_backbone.transformer.wte(next_tokens.squeeze()).view(
+            next_token_embed = model.gpt.transformer.wte(next_tokens.squeeze()).view(
                 generated.shape[0], 1, -1
             )
             generated = torch.cat((generated, next_token_embed), dim=1)
@@ -298,11 +282,11 @@ def generate2(
                     tokens = torch.tensor(tokenizer.encode(prompt))
                     tokens = tokens.unsqueeze(0).to(device)
 
-                generated = model.language_backbone.transformer.wte(tokens)
+                generated = model.gpt.transformer.wte(tokens)
 
             for i in range(entry_length):
 
-                outputs = model.language_backbone(inputs_embeds=generated)
+                outputs = model.gpt(inputs_embeds=generated)
                 logits = outputs.logits
                 logits = logits[:, -1, :] / (temperature if temperature > 0 else 1.0)
                 sorted_logits, sorted_indices = torch.sort(logits, descending=True)
@@ -318,7 +302,7 @@ def generate2(
                 indices_to_remove = sorted_indices[sorted_indices_to_remove]
                 logits[:, indices_to_remove] = filter_value
                 next_token = torch.argmax(logits, -1).unsqueeze(0)
-                next_token_embed = model.language_backbone.transformer.wte(next_token)
+                next_token_embed = model.gpt.transformer.wte(next_token)
                 if tokens is None:
                     tokens = next_token
                 else:

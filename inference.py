@@ -9,7 +9,7 @@ import argparse
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path', required=True)
-    parser.add_argument('--model_name', default='gpt2')
+    parser.add_argument('--gpt2_model', default='gpt2')
     parser.add_argument('--dataset')
     parser.add_argument('--split')
     parser.add_argument('--image_dir')
@@ -17,13 +17,14 @@ if __name__ == '__main__':
     parser.add_argument('--output_file', required=True)
     args = parser.parse_args()
 
+    model_name = 'coco'
     model_path = args.model_path
-    model_type = args.model_name
+    gpt_type = args.gpt2_model
     output_file_name = args.output_file + '.json'
 
     predictor = Predictor()
     print('Setting up predictor...', flush=True)
-    predictor.setup(model_name='coco', model_path=model_path, model_type=model_type)
+    predictor.setup(model_name=model_name, model_path=model_path, gpt_type=gpt_type)
     print('Predictor set up!', flush=True)
 
     if args.json_file is not None:
@@ -132,7 +133,7 @@ if __name__ == '__main__':
             with open(output_file_name, 'w') as fp:
                 json.dump(res, fp)
         count += 1
-        generated_caption = predictor.predict(image=image_path, model='coco', use_beam_search=True)
+        generated_caption = predictor.predict(image=image_path, model=model_name, use_beam_search=True)
         res.append({'image_id': image_id, 'caption': generated_caption, 'id': count})
 
     with open(output_file_name,  'w') as fp:
