@@ -436,13 +436,13 @@ def main():
     parser.add_argument('--tokenizer', type=str, default='gpt2')
     parser.add_argument('--gpt2_model', type=str, default='gpt2')
     args = parser.parse_args()
-    if args.epoch_evaluation:
+    if args.epoch_evaluation or args.steps_evaluation:
         assert args.validation_set_path, 'Error: If --epoch_evaluation is used, --validation_set_path should also be set'
     prefix_length = args.prefix_length
     dataset = ClipCocoDataset(args.data, prefix_length, normalize_prefix=args.normalize_prefix, gpt2_type=args.tokenizer)
     val_dataset = None
-    if args.epoch_evaluation:
-        val_dataset = ClipCocoDataset(args.validation_set_path, prefix_length, normalize_prefix=args.normalize_prefix)
+    if args.epoch_evaluation or args.steps_evaluation:
+        val_dataset = ClipCocoDataset(args.validation_set_path, prefix_length, normalize_prefix=args.normalize_prefix, gpt2_type=args.tokenizer)
     prefix_dim = 640 if args.is_rn else 512
     args.mapping_type = {'mlp': MappingType.MLP, 'transformer': MappingType.Transformer}[args.mapping_type]
     if args.only_prefix:
