@@ -431,13 +431,13 @@ def main():
     parser.add_argument('--normalize_prefix', dest='normalize_prefix', action='store_true')
     parser.add_argument('--load_model_from_path', type=str, default=None)
     parser.add_argument('--epoch_evaluation', action='store_true')
-    parser.add_argument('--steps_evaluation', type=int, default=-1)
+    parser.add_argument('--steps_evaluation', action='store_true')
     parser.add_argument('--validation_set_path', type=str, default=None)
     parser.add_argument('--tokenizer', type=str, default='gpt2')
     parser.add_argument('--gpt2_model', type=str, default='gpt2')
     args = parser.parse_args()
     if args.epoch_evaluation or args.steps_evaluation:
-        assert args.validation_set_path, 'Error: If --epoch_evaluation is used, --validation_set_path should also be set'
+        assert args.validation_set_path, 'Error: If --epoch_evaluation or --steps_evaluation is used, --validation_set_path should also be set'
     prefix_length = args.prefix_length
     dataset = ClipCocoDataset(args.data, prefix_length, normalize_prefix=args.normalize_prefix, gpt2_type=args.tokenizer)
     val_dataset = None
