@@ -4,7 +4,9 @@ set -e
 MSG_PREFIX=[LOG_MSG]
 BASE_DIR=reformulation_experiment/de
 EXP_IND=0
-SAMPLE_NUM=20000
+SAMPLE_NUM=10000
+
+echo "German captioning, experiment ${EXP_IND}, base sample num ${SAMPLE_NUM}"
 
 # Base training
 echo "$MSG_PREFIX Prepare base training data"
