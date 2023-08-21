@@ -79,3 +79,42 @@ echo "$MSG_PREFIX Reformulations inference 1 epoch"
 venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_reformulated/coco_prefix-000.pt --split test --output_file ${BASE_DIR}/data/infer/reformulations_infer_on_test_${EXP_IND}_1_epoch --gpt2_model dbmdz/german-gpt2
 echo "$MSG_PREFIX Reformulations inference 5 epochs"
 venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_reformulated/coco_prefix-004.pt --split test --output_file ${BASE_DIR}/data/infer/reformulations_infer_on_test_${EXP_IND}_5_epoch --gpt2_model dbmdz/german-gpt2
+
+# mPLUG based training
+echo "$MSG_PREFIX mPLUG data preperation"
+venv2/bin/python ${BASE_DIR}/convert_to_training_data.py ${BASE_DIR}/data/translated_data/flickr30k_mplug_de_translated_helsinki.json ${BASE_DIR}/data/translated_train_data/mplug_train_data_${EXP_IND}.json ${EXP_IND}
+echo "$MSG_PREFIX mPLUG preprocess"
+rm -f data/coco/multi30k_val_mplug_data_${EXP_IND}_tokens.pkl
+venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/translated_train_data/mplug_train_data_${EXP_IND}.json --output_file multi30k_val_mplug_data_${EXP_IND}
+echo "$MSG_PREFIX mPLUG training"
+venv2/bin/python train.py --data ./data/coco/multi30k_val_mplug_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_mplug --epochs 5 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --tokenizer dbmdz/german-gpt2 --gpt2_model dbmdz/german-gpt2
+echo "$MSG_PREFIX mPLUG inference 1 epoch"
+venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_mplug/coco_prefix-000.pt --split test --output_file ${BASE_DIR}/data/infer/mplug_infer_on_test_${EXP_IND}_1_epoch --gpt2_model dbmdz/german-gpt2
+echo "$MSG_PREFIX mPLUG inference 5 epochs"
+venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_mplug/coco_prefix-004.pt --split test --output_file ${BASE_DIR}/data/infer/mplug_infer_on_test_${EXP_IND}_5_epoch --gpt2_model dbmdz/german-gpt2
+
+# mPLUG re based training
+echo "$MSG_PREFIX mPLUG re data preperation"
+venv2/bin/python ${BASE_DIR}/convert_to_training_data.py ${BASE_DIR}/data/translated_data/flickr30k_mplug_re_de_translated_helsinki.json ${BASE_DIR}/data/translated_train_data/mplug_re_train_data_${EXP_IND}.json ${EXP_IND}
+echo "$MSG_PREFIX mPLUG re preprocess"
+rm -f data/coco/multi30k_val_mplug_re_data_${EXP_IND}_tokens.pkl
+venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/translated_train_data/mplug_re_train_data_${EXP_IND}.json --output_file multi30k_val_mplug_re_data_${EXP_IND}
+echo "$MSG_PREFIX mPLUG re training"
+venv2/bin/python train.py --data ./data/coco/multi30k_val_mplug_re_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_mplug_re --epochs 5 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --tokenizer dbmdz/german-gpt2 --gpt2_model dbmdz/german-gpt2
+echo "$MSG_PREFIX mPLUG re inference 1 epoch"
+venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_mplug_re/coco_prefix-000.pt --split test --output_file ${BASE_DIR}/data/infer/mplug_re_infer_on_test_${EXP_IND}_1_epoch --gpt2_model dbmdz/german-gpt2
+echo "$MSG_PREFIX mPLUG re inference 5 epochs"
+venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_mplug_re/coco_prefix-004.pt --split test --output_file ${BASE_DIR}/data/infer/mplug_re_infer_on_test_${EXP_IND}_5_epoch --gpt2_model dbmdz/german-gpt2
+
+# BLIP based training
+echo "$MSG_PREFIX BLIP data preperation"
+venv2/bin/python ${BASE_DIR}/convert_to_training_data.py ${BASE_DIR}/data/translated_data/flickr30k_blip_de_translated_helsinki.json ${BASE_DIR}/data/translated_train_data/blip_train_data_${EXP_IND}.json ${EXP_IND}
+echo "$MSG_PREFIX BLIP preprocess"
+rm -f data/coco/multi30k_val_blip_data_${EXP_IND}_tokens.pkl
+venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/translated_train_data/blip_train_data_${EXP_IND}.json --output_file multi30k_val_blip_data_${EXP_IND}
+echo "$MSG_PREFIX BLIP training"
+venv2/bin/python train.py --data ./data/coco/multi30k_val_blip_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_blip --epochs 5 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --tokenizer dbmdz/german-gpt2 --gpt2_model dbmdz/german-gpt2
+echo "$MSG_PREFIX BLIP inference 1 epoch"
+venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_blip/coco_prefix-000.pt --split test --output_file ${BASE_DIR}/data/infer/blip_infer_on_test_${EXP_IND}_1_epoch --gpt2_model dbmdz/german-gpt2
+echo "$MSG_PREFIX BLIP inference 5 epochs"
+venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_blip/coco_prefix-004.pt --split test --output_file ${BASE_DIR}/data/infer/blip_infer_on_test_${EXP_IND}_5_epoch --gpt2_model dbmdz/german-gpt2
