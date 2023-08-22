@@ -9,7 +9,7 @@ exp_ind = int(sys.argv[3])
 with open(input_file, 'r') as fp:
     data = json.load(fp)
 
-with open(f'reformulation_experiment/data/image_ids/val_image_ids_{exp_ind}.json', 'r') as fp:
+with open(f'reformulation_experiment/de/data/image_ids/val_image_ids_{exp_ind}.json', 'r') as fp:
     image_ids = json.load(fp)
 image_ids_dict = {x: True for x in image_ids}
 
