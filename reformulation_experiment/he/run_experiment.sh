@@ -6,16 +6,18 @@ BASE_DIR=reformulation_experiment/he
 EXP_IND=0
 SAMPLE_NUM=3000
 
+echo "Hebrew reformulation experiment ${EXP_IND} with ${SAMPLE_NUM} samples for base training"
+
 # Base training
 echo "$MSG_PREFIX Prepare base training data"
 venv2/bin/python ${BASE_DIR}/prepare_base_training_data.py ${EXP_IND} ${SAMPLE_NUM}
 echo "$MSG_PREFIX base preprocess"
-rm -f data/coco/multi30k_train_data_${EXP_IND}_tokens.pkl
-venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/base_train_data/multi30k_train_data_${EXP_IND}.json --output_file multi30k_train_data_${EXP_IND}
+rm -f data/coco/crossmodal_train_data_${EXP_IND}_tokens.pkl
+venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/base_train_data/base_train_data_${EXP_IND}.json --output_file crossmodal_train_data_${EXP_IND}
 echo "$MSG_PREFIX Base training"
-venv2/bin/python train.py --data ./data/coco/multi30k_train_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_base --epochs 10 --tokenizer Norod78/distilgpt2-base-pretrained-he --gpt2_model Norod78/distilgpt2-base-pretrained-he
+venv2/bin/python train.py --data ./data/coco/crossmodal_train_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_base --epochs 10 --tokenizer Norod78/distilgpt2-base-pretrained-he --gpt2_model Norod78/distilgpt2-base-pretrained-he
 echo "$MSG_PREFIX Base inference"
-venv2/bin/python inference.py --dataset crossmodal --model_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --json_file ${BASE_DIR}/data/image_ids/test_image_ids_${EXP_IND} --output_file ${BASE_DIR}/data/infer/base_infer_on_test_${EXP_IND} --gpt2_model Norod78/distilgpt2-base-pretrained-he
+venv2/bin/python inference.py --dataset crossmodal --model_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --json_file ${BASE_DIR}/data/image_ids/test_image_ids_${EXP_IND}.json --output_file ${BASE_DIR}/data/infer/base_infer_on_test_${EXP_IND} --gpt2_model Norod78/distilgpt2-base-pretrained-he
 
 # Not implemented
 # GT based training
