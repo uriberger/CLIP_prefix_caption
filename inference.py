@@ -47,6 +47,9 @@ if __name__ == '__main__':
             elif args.dataset == 'flickr30k':
                 image_dir_path = '/cs/labs/oabend/uriber/datasets/flickr30/images'
                 file_name = f'{image_id}.jpg'
+            elif args.dataset == 'crossmodal':
+                image_dir_path = '/cs/labs/oabend/uriber/datasets/crossmodal3600/images'
+                file_name = hex(image_id)[2:].zfill(16) + '.jpg'
             dataset[image_id] = os.path.join(image_dir_path, file_name)
     elif args.dataset == 'COCO':
         assert args.split is not None, 'Please specify a split'
