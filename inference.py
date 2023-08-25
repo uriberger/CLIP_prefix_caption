@@ -35,6 +35,19 @@ if __name__ == '__main__':
                 for sample in coco_data:
                     image_id = sample['cocoid']
                     image_id_to_split[image_id] = sample['filepath'].split('2014')[0]
+        elif args.dataset == 'aic':
+            image_id_to_split = {}
+            with open('/cs/labs/oabend/uriber/datasets/ai_challenger/ai_challenger_caption_train_20170902/caption_train_annotations_20170902.json', 'r') as fp:
+                aic_train_data = json.load(fp)
+            with open('/cs/labs/oabend/uriber/datasets/ai_challenger/ai_challenger_caption_validation_20170910/caption_validation_annotations_20170910.json', 'r') as fp:
+                aic_val_data = json.load(fp)
+            for sample in aic_train_data:
+                image_id = int(x['image_id'].split('.jpg')[0], 16)
+                image_id_to_split[image_id] = 'train'
+            for sample in aic_val_data:
+                image_id = int(x['image_id'].split('.jpg')[0], 16)
+                image_id_to_split[image_id] = 'validation'
+            split_to_date = {'train': '20170902', 'validation': '20170910'}
         image_ids_file_path = args.json_file
         with open(image_ids_file_path, 'r') as fp:
             image_ids = json.load(fp)
@@ -50,6 +63,10 @@ if __name__ == '__main__':
             elif args.dataset == 'crossmodal':
                 image_dir_path = '/cs/labs/oabend/uriber/datasets/crossmodal3600/images'
                 file_name = hex(image_id)[2:].zfill(16) + '.jpg'
+            elif args.dataset == 'aic':
+                split = image_id_to_split[image_id]
+                date = split_to_date[split]
+                image_dir_path = f'/cs/labs/oabend/uriber/datasets/ai_challenger/ai_challenger_caption_{split}_{date}/caption_{split}_images_{date}/{image_id}.jpg'
             dataset[image_id] = os.path.join(image_dir_path, file_name)
     elif args.dataset == 'COCO':
         assert args.split is not None, 'Please specify a split'
