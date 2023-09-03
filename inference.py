@@ -42,10 +42,10 @@ if __name__ == '__main__':
             with open('/cs/labs/oabend/uriber/datasets/ai_challenger/ai_challenger_caption_validation_20170910/caption_validation_annotations_20170910.json', 'r') as fp:
                 aic_val_data = json.load(fp)
             for sample in aic_train_data:
-                image_id = int(x['image_id'].split('.jpg')[0], 16)
+                image_id = int(sample['image_id'].split('.jpg')[0], 16)
                 image_id_to_split[image_id] = 'train'
             for sample in aic_val_data:
-                image_id = int(x['image_id'].split('.jpg')[0], 16)
+                image_id = int(sample['image_id'].split('.jpg')[0], 16)
                 image_id_to_split[image_id] = 'validation'
             split_to_date = {'train': '20170902', 'validation': '20170910'}
         image_ids_file_path = args.json_file
@@ -66,7 +66,8 @@ if __name__ == '__main__':
             elif args.dataset == 'aic':
                 split = image_id_to_split[image_id]
                 date = split_to_date[split]
-                image_dir_path = f'/cs/labs/oabend/uriber/datasets/ai_challenger/ai_challenger_caption_{split}_{date}/caption_{split}_images_{date}/{image_id}.jpg'
+                image_dir_path = f'/cs/labs/oabend/uriber/datasets/ai_challenger/ai_challenger_caption_{split}_{date}/caption_{split}_images_{date}'
+                file_name = f'{hex(image_id)[2:].zfill(40)}.jpg'
             dataset[image_id] = os.path.join(image_dir_path, file_name)
     elif args.dataset == 'COCO':
         assert args.split is not None, 'Please specify a split'
