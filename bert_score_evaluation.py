@@ -51,7 +51,12 @@ for pattern in input_patterns:
             f1s.append(statistics.mean(F1.tolist()))
     print('---------------------')
     print(pattern)
-    print(f'Precision: {round(statistics.mean(precisions), 3)}+-{round(statistics.stdev(precisions), 3)}')
-    print(f'Recall: {round(statistics.mean(recalls), 3)}+-{round(statistics.stdev(recalls), 3)}')
-    print(f'F1: {round(statistics.mean(f1s), 3)}+-{round(statistics.stdev(f1s), 3)}', flush=True)
+    if len(precisions) > 1:
+        print(f'Precision: {round(statistics.mean(precisions), 3)}+-{round(statistics.stdev(precisions), 3)}')
+        print(f'Recall: {round(statistics.mean(recalls), 3)}+-{round(statistics.stdev(recalls), 3)}')
+        print(f'F1: {round(statistics.mean(f1s), 3)}+-{round(statistics.stdev(f1s), 3)}', flush=True)
+    else:
+        print(f'Precision: {round(precisions[0], 3)}')
+        print(f'Recall: {round(recalls, 3)}')
+        print(f'F1: {round(f1s, 3)}', flush=True)
     print('---------------------')
