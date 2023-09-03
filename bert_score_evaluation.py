@@ -57,6 +57,6 @@ for pattern in input_patterns:
         print(f'F1: {round(statistics.mean(f1s), 3)}+-{round(statistics.stdev(f1s), 3)}', flush=True)
     else:
         print(f'Precision: {round(precisions[0], 3)}')
-        print(f'Recall: {round(recalls, 3)}')
-        print(f'F1: {round(f1s, 3)}', flush=True)
+        print(f'Recall: {round(recalls[0], 3)}')
+        print(f'F1: {round(f1s[0], 3)}', flush=True)
     print('---------------------')
