@@ -14,6 +14,7 @@ if __name__ == '__main__':
     parser.add_argument('--split')
     parser.add_argument('--image_dir')
     parser.add_argument('--json_file')
+    parser.add_argument('--image_path_file')
     parser.add_argument('--output_file', required=True)
     args = parser.parse_args()
 
@@ -69,6 +70,10 @@ if __name__ == '__main__':
                 image_dir_path = f'/cs/labs/oabend/uriber/datasets/ai_challenger/ai_challenger_caption_{split}_{date}/caption_{split}_images_{date}'
                 file_name = f'{hex(image_id)[2:].zfill(40)}.jpg'
             dataset[image_id] = os.path.join(image_dir_path, file_name)
+    elif args.image_path_file is not None:
+        with open(args.image_path_file, 'r') as fp:
+            data = json.load(fp)
+        dataset = {x['image_id']: x['image_path'] for x in data}
     elif args.dataset == 'COCO':
         assert args.split is not None, 'Please specify a split'
         # COCO Karpathy split
