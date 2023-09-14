@@ -16,6 +16,9 @@ train_*/*
 res*.json
 reformulation_experiment/*/data
 reformulation_experiment/*/output
+reformulation_experiment/*/translated_data
+reformulation_experiment/*/infer
+reformulation_experiment/*/image_ids
 multi30k_*_data.json
 to_delete
 generalization_experiment/data
