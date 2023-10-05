@@ -3,10 +3,10 @@ import random
 import os
 import json
 
-assert len(sys.argv) == 4
+assert len(sys.argv) == 3
 exp_ind = int(sys.argv[1])
+dir_path = sys.argv[2]
 base_sample_num = 3000
-dir_path = sys.argv[3]
 
 with open('crossmodal3600_es.json', 'r') as fp:
     data = json.load(fp)
