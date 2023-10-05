@@ -3,8 +3,12 @@ set -e
 
 MSG_PREFIX=[LOG_MSG]
 BASE_DIR=reformulation_experiment/de
-EXP_IND=0
-SAMPLE_NUM=10000
+if [[ -z "${EXP_IND}" ]]; then
+    EXP_IND=0
+fi
+if [[ -z "${SAMPLE_NUM}" ]]; then
+    SAMPLE_NUM=10000
+fi
 
 echo "German captioning, experiment ${EXP_IND}, base sample num ${SAMPLE_NUM}"
 

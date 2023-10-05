@@ -5,8 +5,12 @@ from collections import defaultdict
 from utils import get_caption_data_for_split
 import pickle
 
-assert len(sys.argv) == 2
+assert len(sys.argv) == 2 or len(sys.argv) == 3
 exp_ind = int(sys.argv[1])
+if len(sys.argv) == 3:
+    base_sample_num = int(sys.argv[2])
+else:
+    base_sample_num = None
 
 with open('/cs/labs/oabend/uriber/datasets/flickr30/karpathy/dataset_flickr30k.json', 'r') as fp:
     flickr_data = json.load(fp)['images']
@@ -61,7 +65,13 @@ image_id_to_captions = defaultdict(list)
 for x in train_data:
     image_id_to_captions[x['image_id']].append(x['caption'])
 
-res = [{'image_id': x[0], 'image_path': f'/cs/labs/oabend/uriber/datasets/flickr30/images/{x[0]}.jpg', 'sentences': [{'raw': y} for y in x[1]]} for x in image_id_to_captions.items()]
+image_ids = list(image_id_to_captions.keys())
+if base_sample_num is not None:
+    image_ids = random.sample(image_ids, base_sample_num)
+image_ids_dict = {x:True for x in image_ids}
+
+res = [{'image_id': x[0], 'image_path': f'/cs/labs/oabend/uriber/datasets/flickr30/images/{x[0]}.jpg', 'sentences': [{'raw': y} for y in x[1]]} for x in image_id_to_captions.items() if x[0] in image_ids_dict]
+print(f'Saving base train set with {len(res)} images')
     
 with open(f'reformulation_experiment/de/data/base_train_data/multi30k_train_data_{exp_ind}.json', 'w') as fp:
     fp.write(json.dumps(res))
