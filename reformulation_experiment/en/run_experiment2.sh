@@ -4,14 +4,14 @@ set -e
 MSG_PREFIX=[LOG_MSG]
 BASE_DIR=reformulation_experiment/en
 EXP_IND=0
-SAMPLE_NUM=10000
+
+echo "Reformulation training on Flickr with additional training on COCO, experiment ${EXP_IND}"
 
 # Base training
 echo "$MSG_PREFIX Prepare base training data"
-venv2/bin/python ${BASE_DIR}/prepare_base_training_data.py ${EXP_IND} ${SAMPLE_NUM}
+venv2/bin/python ${BASE_DIR}/prepare_base_training_data2.py
 echo "$MSG_PREFIX base preprocess"
-rm -f data/coco/coco_train_data_${EXP_IND}_tokens.pkl
-venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/base_train_data/coco_train_data_${EXP_IND}.json --output_file coco_train_data_${EXP_IND}
+venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/base_train_data/flickr_train_data.json --output_file coco_train_data_${EXP_IND}
 echo "$MSG_PREFIX Base training"
 venv2/bin/python train.py --data ./data/coco/coco_train_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_base --epochs 10
 echo "$MSG_PREFIX Base inference"
