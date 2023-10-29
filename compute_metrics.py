@@ -6,15 +6,18 @@ from pycocoevalcap.spice.spice import Spice
 from evaluate import load
 import statistics
 import numpy as np
+from collections import defaultdict
 
 def remap_image_ids(references, candidates):
     # Image ids can be too long for SPICE. Map them to small integer ids
-    new_to_orig_id = list(references.keys())
+    new_to_orig_id = list(set([x['image_id'] for x in references]))
     orig_to_new_id = {new_to_orig_id[i]: i for i in range(len(new_to_orig_id))}
-    references = {orig_to_new_id[x[0]]: x[1] for x in references.items()}
-    candidates = {orig_to_new_id[x[0]]: x[1] for x in candidates.items()}
+    modified_refs = defaultdict(list)
+    for x in references:
+        modified_refs[orig_to_new_id[x['image_id']]].append(x['caption'])
+    candidates = {orig_to_new_id[x['image_id']]: [x['caption']] for x in candidates}
 
-    return references, candidates
+    return modified_refs, candidates
 
 def compute_metrics(references, candidates):
     references, candidates = remap_image_ids(references, candidates)
