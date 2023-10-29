@@ -12,7 +12,7 @@ import argparse
 import json
 from typing import Tuple, Optional, Union
 from predict import Predictor
-import importlib
+from compute_metrics import compute_metrics
 
 class MappingType(Enum):
     MLP = 'mlp'
@@ -387,29 +387,10 @@ def evaluate_model(model, val_dataset, device, output_dir, file_suffix):
             generated_caption = predictor.predict(image=image_path, model='existing', use_beam_search=True)
             generated_captions.append({'image_id': image_id, 'caption': generated_caption, 'id': idx})
 
-    generation_filepath = os.path.join(output_dir, 'val_generation_' + file_suffix + '.json')
-    with open(generation_filepath, 'w') as fp:
-        json.dump(generated_captions, fp)
-
     model.train()
 
-    gt_filepath = os.path.join(output_dir, 'val_gt.json')
-    gt_data = {'annotations': gt_data}
-    if not os.path.isfile(gt_filepath):
-        with open(gt_filepath, 'w') as fp:
-            json.dump(gt_data, fp)
-
     print('\tRunning evaluation script...')
-    coco_module = importlib.import_module('coco-caption.pycocotools.coco')
-    COCO = getattr(coco_module, 'COCO')
-    eval_module = importlib.import_module('coco-caption.pycocoevalcap.eval')
-    COCOEvalCap = getattr(eval_module, 'COCOEvalCap')
-
-    coco = COCO(gt_filepath)
-    cocoRes = coco.loadRes(generation_filepath)
-    cocoEval = COCOEvalCap(coco, cocoRes, 'corpus')
-
-    res_dict = cocoEval.evaluate()
+    res_dict = compute_metrics(gt_data, generated_captions)
     res_dict['mean_loss'] = loss_sum/len(visited_image_ids)
     return res_dict
             
