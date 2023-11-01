@@ -136,6 +136,17 @@ if __name__ == '__main__':
             image_path = f'/cs/labs/oabend/uriber/datasets/ai_challenger/ai_challenger_caption_validation_20170910/caption_validation_images_20170910/{sample["file_name"]}'
             image_id = sample['id']
             dataset[image_id] = image_path
+    elif args.dataset == 'XM3600':
+        # Crossmodal3600
+        cross_modal_root_path = '/cs/labs/oabend/uriber/datasets/crossmodal3600'
+        with open(os.path.join(cross_modal_root_path, 'captions.jsonl'), 'r') as fp:
+            json_list = list(fp)
+        data = [json.loads(x) for x in json_list]
+        dataset = {}
+        for sample in data:
+            image_id = int(sample['image/key'], 16)
+            image_path = os.path.join(cross_modal_root_path, 'images', f'{sample["image/key"]}.jpg')
+            dataset[image_id] = os.path.join(cross_modal_root_path, 'images', sample['image/key'] + '.jpg')
     elif args.image_dir is not None:
         image_dir_path = args.image_dir
         dataset = {}
