@@ -7,8 +7,8 @@ EXP_IND=2
 SAMPLE_NUM=100000
 VAL_SAMPLE_NUM=1000
 VAL_STRING="--validation_set_path data/coco/val_data_${EXP_IND}.pkl --steps_evaluation 20"
-BASE_SAMPLE_NUM=50000
-RE_NUM=2
+BASE_SAMPLE_NUM=25000
+RE_NUM=3
 
 echo "Reformulation training on COCO with additional training on COCO, experiment ${EXP_IND}, ${SAMPLE_NUM} samples, ${BASE_SAMPLE_NUM} base samples, re num ${RE_NUM}"
 
@@ -50,8 +50,10 @@ do
     then
        PREV_MODEL_PATH="${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-000.pt"
     else
-       PREV_I=${i-1}
-       PREV_MODEL_PATH="${BASE_DIR}/output/exp_${EXP_IND}_re_${PREV_I}/coco_prefix-000.pt"
+        PREV_I=$(($i-1))
+        echo "PREV_I is ${PREV_I}"
+        PREV_MODEL_PATH="${BASE_DIR}/output/exp_${EXP_IND}_re_${PREV_I}/coco_prefix-000.pt"
+        echo "PREV_MODEL_PATH is ${PREV_MODEL_PATH}"
     fi
     echo "$MSG_PREFIX Base inference on additional $i"
     venv2/bin/python inference.py --json_file ${BASE_DIR}/data/train_data/additional_train_image_ids_${EXP_IND}_${i}.json --model_path ${PREV_MODEL_PATH} --output_file ${BASE_DIR}/data/infer/base_infer_on_additional_train_${EXP_IND}_${i} --dataset COCO
@@ -70,13 +72,13 @@ do
     echo "$MSG_PREFIX delete previous model $i"
     if [ $i -gt 0 ]
     then
-       PREV_I=${i-1}
+       PREV_I=$(($i-1))
        DEL_STR="rm -f ${BASE_DIR}/output/exp_${EXP_IND}_re_${PREV_I}/*.pt"
        echo "$MSG_PREFIX running: $DEL_STR"
        eval "$DEL_STR"
     fi
 done
-LAST_IND=${RE_NUM-1}
+LAST_IND=$(($RE_NUM-1))
 RE_MODEL_PATH="${BASE_DIR}/output/exp_${EXP_IND}_re_${LAST_IND}/coco_prefix-000.pt"
 echo "$MSG_PREFIX Re inference on COCO"
 venv2/bin/python inference.py --dataset COCO --model_path ${RE_MODEL_PATH} --split test --output_file ${BASE_DIR}/data/infer/re_infer_on_coco_test_${EXP_IND}
