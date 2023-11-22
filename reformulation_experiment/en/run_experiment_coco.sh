@@ -3,33 +3,91 @@ set -e
 
 MSG_PREFIX=[LOG_MSG]
 BASE_DIR=reformulation_experiment/en
-EXP_IND=0
+EXP_IND=2
 SAMPLE_NUM=100000
+VAL_SAMPLE_NUM=1000
+VAL_STRING="--validation_set_path data/coco/val_data_${EXP_IND}.pkl --steps_evaluation 20"
+BASE_SAMPLE_NUM=25000
+RE_NUM=3
 
-echo "Reformulation training on COCO with additional training on COCO, experiment ${EXP_IND}, ${SAMPLE_NUM} samples"
+echo "Reformulation training on COCO with additional training on COCO, experiment ${EXP_IND}, ${SAMPLE_NUM} samples, ${BASE_SAMPLE_NUM} base samples, re num ${RE_NUM}"
+
+: '# Prepare data
+echo "$MSG_PREFIX Prepare data"
+venv2/bin/python ${BASE_DIR}/prepare_coco_training_data.py ${EXP_IND} ${SAMPLE_NUM} ${VAL_SAMPLE_NUM}
+echo "MSG_PREFIX val data preprocess"
+rm -f data/coco/val_data_${EXP_IND}_tokens.pkl
+venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/train_data/val_data_${EXP_IND}.json --output_file val_data_${EXP_IND}
 
 # GT based training
-echo "$MSG_PREFIX Prepare GT training data"
-venv2/bin/python ${BASE_DIR}/prepare_coco_training_data.py ${EXP_IND} ${SAMPLE_NUM}
 echo "$MSG_PREFIX GT preprocess"
-rm -f data/coco/coco_gt_data_${EXP_IND}_tokens.pkl
+rm -f data/coco/gt_train_data_${EXP_IND}_tokens.pkl
 venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/train_data/gt_train_data_${EXP_IND}.json --output_file gt_train_data_${EXP_IND}
 echo "$MSG_PREFIX GT training"
-venv2/bin/python train.py --data ./data/coco/gt_train_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_gt --epochs 1
+venv2/bin/python train.py --data ./data/coco/gt_train_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_gt --epochs 1 ${VAL_STRING}
 echo "$MSG_PREFIX GT inference on COCO"
 venv2/bin/python inference.py --dataset COCO --model_path ${BASE_DIR}/output/exp_${EXP_IND}_gt/coco_prefix-000.pt --split test --output_file ${BASE_DIR}/data/infer/gt_infer_on_coco_test_${EXP_IND}
+echo "$MSG_PREFIX GT inference on Flickr30k"
+venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_gt/coco_prefix-000.pt --split test --output_file ${BASE_DIR}/data/infer/gt_infer_on_flickr_test_${EXP_IND}
+echo "$MSG_PREFIX GT inference on XM3600"
+venv2/bin/python inference.py --dataset XM3600 --model_path ${BASE_DIR}/output/exp_${EXP_IND}_gt/coco_prefix-000.pt --output_file ${BASE_DIR}/data/infer/gt_infer_on_xm3600_${EXP_IND}
 
-: '# Base training
+# Base training
 echo "$MSG_PREFIX Prepare base training data"
-venv2/bin/python ${BASE_DIR}/prepare_coco_training_data.py
+venv2/bin/python ${BASE_DIR}/prepare_coco_re_training_data.py ${EXP_IND} ${BASE_SAMPLE_NUM}
 echo "$MSG_PREFIX base preprocess"
-venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/base_train_data/flickr_train_data.json --output_file coco_train_data_${EXP_IND}
+rm -f data/coco/base_train_data_${EXP_IND}_tokens.pkl
+venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/train_data/base_train_data_${EXP_IND}.json --output_file base_train_data_${EXP_IND}
 echo "$MSG_PREFIX Base training"
-venv2/bin/python train.py --data ./data/coco/coco_train_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_base --epochs 10
-echo "$MSG_PREFIX Base inference"
-venv2/bin/python inference.py --dataset COCO --model_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --split test --output_file ${BASE_DIR}/data/infer/base_infer_on_test_${EXP_IND}
+venv2/bin/python train.py --data ./data/coco/base_train_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_base --epochs 1 ${VAL_STRING}'
 
-# Translation based training
+# Re training
+echo "$MSG_PREFIX Re data splitting"
+venv2/bin/python ${BASE_DIR}/split_re_data.py ${EXP_IND} ${RE_NUM}
+for (( i=0; i<$RE_NUM; i++ ))
+do
+    if [ $i -eq 0 ]
+    then
+       PREV_MODEL_PATH="${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-000.pt"
+    else
+        PREV_I=$(($i-1))
+        echo "PREV_I is ${PREV_I}"
+        PREV_MODEL_PATH="${BASE_DIR}/output/exp_${EXP_IND}_re_${PREV_I}/coco_prefix-000.pt"
+        echo "PREV_MODEL_PATH is ${PREV_MODEL_PATH}"
+    fi
+    echo "$MSG_PREFIX Base inference on additional $i"
+    venv2/bin/python inference.py --json_file ${BASE_DIR}/data/train_data/additional_train_image_ids_${EXP_IND}_${i}.json --model_path ${PREV_MODEL_PATH} --output_file ${BASE_DIR}/data/infer/base_infer_on_additional_train_${EXP_IND}_${i} --dataset COCO
+    echo "$MSG_PREFIX Reformulation $i"
+    rm -f ${BASE_DIR}/data/infer/base_infer_on_additional_train_${EXP_IND}_${i}_reformulated.json
+    cd ../AliceMind/mPLUG
+    venv/bin/python reformulate.py --model_path output/vqa_mplug_base/checkpoint_07.pth --input_file ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_additional_train_${EXP_IND}_${i}.json --output_format caption --output_file ../../CLIP_prefix_caption/${BASE_DIR}/data/infer/base_infer_on_additional_train_${EXP_IND}_${i}_reformulated --dataset COCO
+    cd ../../CLIP_prefix_caption
+    echo "$MSG_PREFIX Re data preparation $i"
+    venv2/bin/python ${BASE_DIR}/convert_to_training_data.py ${BASE_DIR}/data/infer/base_infer_on_additional_train_${EXP_IND}_${i}_reformulated.json ${BASE_DIR}/data/train_data/re_train_data_${EXP_IND}_${i}.json COCO
+    echo "$MSG_PREFIX Re preprocess $i"
+    rm -f data/coco/re_train_data_${EXP_IND}_${i}_tokens.pkl
+    venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/train_data/re_train_data_${EXP_IND}_${i}.json --output_file re_train_data_${EXP_IND}_${i}
+    echo "$MSG_PREFIX Re training $i"
+    venv2/bin/python train.py --data ./data/coco/re_train_data_${EXP_IND}_${i}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_re_${i} --epochs 1 --load_model_from_path ${PREV_MODEL_PATH} ${VAL_STRING}
+    echo "$MSG_PREFIX delete previous model $i"
+    if [ $i -gt 0 ]
+    then
+       PREV_I=$(($i-1))
+       DEL_STR="rm -f ${BASE_DIR}/output/exp_${EXP_IND}_re_${PREV_I}/*.pt"
+       echo "$MSG_PREFIX running: $DEL_STR"
+       eval "$DEL_STR"
+    fi
+done
+LAST_IND=$(($RE_NUM-1))
+RE_MODEL_PATH="${BASE_DIR}/output/exp_${EXP_IND}_re_${LAST_IND}/coco_prefix-000.pt"
+echo "$MSG_PREFIX Re inference on COCO"
+venv2/bin/python inference.py --dataset COCO --model_path ${RE_MODEL_PATH} --split test --output_file ${BASE_DIR}/data/infer/re_infer_on_coco_test_${EXP_IND}
+echo "$MSG_PREFIX Re inference on Flickr30k"
+venv2/bin/python inference.py --dataset flickr30k --model_path ${RE_MODEL_PATH} --split test --output_file ${BASE_DIR}/data/infer/re_infer_on_flickr_test_${EXP_IND}
+echo "$MSG_PREFIX Re inference on XM3600"
+venv2/bin/python inference.py --dataset XM3600 --model_path ${RE_MODEL_PATH} --output_file ${BASE_DIR}/data/infer/re_infer_on_xm3600_${EXP_IND}
+
+: '# Translation based training
 echo "$MSG_PREFIX Prepare translation training data"
 venv2/bin/python ${BASE_DIR}/prepare_translation_training_data2.py ${EXP_IND}
 echo "$MSG_PREFIX Translation preprocess"
