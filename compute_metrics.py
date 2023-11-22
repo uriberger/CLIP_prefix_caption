@@ -19,7 +19,7 @@ def remap_image_ids(references, candidates):
 
     return modified_refs, candidates
 
-def compute_metrics(references, candidates):
+def compute_metrics(references, candidates, lang='en'):
     references, candidates = remap_image_ids(references, candidates)
 
     ###BLEU#####
@@ -44,13 +44,14 @@ def compute_metrics(references, candidates):
     cider, _ = pycoco_cider.compute_score(references, candidates)
 
     ####SPICE###
-    print("Compute SPICE ... ")
-    pycoco_spice = Spice()
-    spice, spice_scores = pycoco_spice.compute_score(references, candidates)
-    spice_submetrics = ['Relation', 'Cardinality', 'Attribute', 'Size', 'Color', 'Object']
-    spice_submetrics_res = {}
-    for submetric in spice_submetrics:
-        spice_submetrics_res[submetric] = np.mean(np.array([x[submetric]['f'] for x in spice_scores if not np.isnan(x[submetric]['f'])]))
+    if lang == 'en':
+        print("Compute SPICE ... ")
+        pycoco_spice = Spice()
+        spice, spice_scores = pycoco_spice.compute_score(references, candidates)
+        spice_submetrics = ['Relation', 'Cardinality', 'Attribute', 'Size', 'Color', 'Object']
+        spice_submetrics_res = {}
+        for submetric in spice_submetrics:
+            spice_submetrics_res[submetric] = np.mean(np.array([x[submetric]['f'] for x in spice_scores if not np.isnan(x[submetric]['f'])]))
 
     ####BERTScore###
     bertscore = load("bertscore")
@@ -60,11 +61,12 @@ def compute_metrics(references, candidates):
     prediction_list = list(candidates.items())
     prediction_list.sort(key=lambda x:x[0])
     predictions = [x[1][0] for x in prediction_list]
-    results = bertscore.compute(predictions=predictions, references=references, lang='en')
+    results = bertscore.compute(predictions=predictions, references=references, lang=lang)
     bertscore = statistics.mean(results['f1'])
 
     res = {'bleu1': bleu[0], 'bleu2': bleu[1], 'bleu3': bleu[2], 'bleu4': bleu[3], 'rouge': rouge, 'cider': cider, 'bertscore': bertscore}
-    res['spice'] = spice
-    for submetric, val in spice_submetrics_res.items():
-        res[submetric] = val
+    if lang == 'en':
+        res['spice'] = spice
+        for submetric, val in spice_submetrics_res.items():
+            res[submetric] = val
     return res
