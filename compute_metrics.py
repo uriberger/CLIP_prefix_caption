@@ -1,3 +1,4 @@
+from pycocoevalcap.tokenizer.ptbtokenizer import PTBTokenizer
 from pycocoevalcap.bleu.bleu import Bleu
 from pycocoevalcap.meteor.meteor import Meteor
 from pycocoevalcap.rouge.rouge import Rouge
@@ -21,11 +22,14 @@ def remap_image_ids(references, candidates):
 
 def compute_metrics(references, candidates, lang='en'):
     references, candidates = remap_image_ids(references, candidates)
+    tokenizer = PTBTokenizer()
+    tokenized_references = tokenizer.tokenize({x[0]: [{'caption': y} for y in x[1]] for x in references.items()})
+    tokenized_candidates = tokenizer.tokenize({x[0]: [{'caption': y} for y in x[1]] for x in candidates.items()})
 
     ###BLEU#####
     print("Compute BLEU ... ")
     pycoco_bleu = Bleu()
-    bleu, _ = pycoco_bleu.compute_score(references, candidates)
+    bleu, _ = pycoco_bleu.compute_score(tokenized_references, tokenized_candidates)
 
     # ####METEOR###
     # print("Compute METEOR ... ")
@@ -36,18 +40,18 @@ def compute_metrics(references, candidates, lang='en'):
     ####ROUGE###
     print("Compute ROUGE ... ")
     pycoco_rouge = Rouge()
-    rouge, _ = pycoco_rouge.compute_score(references, candidates)
+    rouge, _ = pycoco_rouge.compute_score(tokenized_references, tokenized_candidates)
 
     ####CIDER###
     print("Compute CIDER ... ")
     pycoco_cider = Cider()
-    cider, _ = pycoco_cider.compute_score(references, candidates)
+    cider, _ = pycoco_cider.compute_score(tokenized_references, tokenized_candidates)
 
     ####SPICE###
     if lang == 'en':
         print("Compute SPICE ... ")
         pycoco_spice = Spice()
-        spice, spice_scores = pycoco_spice.compute_score(references, candidates)
+        spice, spice_scores = pycoco_spice.compute_score(tokenized_references, tokenized_candidates)
         spice_submetrics = ['Relation', 'Cardinality', 'Attribute', 'Size', 'Color', 'Object']
         spice_submetrics_res = {}
         for submetric in spice_submetrics:
