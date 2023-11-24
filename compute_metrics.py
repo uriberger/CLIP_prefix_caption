@@ -1,4 +1,5 @@
 from pycocoevalcap.tokenizer.ptbtokenizer import PTBTokenizer
+import regex
 import jieba
 from pycocoevalcap.bleu.bleu import Bleu
 from pycocoevalcap.meteor.meteor import Meteor
@@ -26,11 +27,48 @@ def jieba_tokenize(caption):
     tokenized_caption = ' '.join(list(jieba.cut(non_tokenized_caption, cut_all=False)))
     return tokenized_caption
 
+def convert_to_dummy_tokens(refs, cands):
+    orig_to_dummy_token = {}
+    count = 0
+
+    new_refs = {}
+    for image_id, caption_list in refs.items():
+        new_refs[image_id] = []
+        for caption in caption_list:
+            new_tokens = []
+            for token in caption.split():
+                if len(regex.findall(r'\p{Han}+', token)) == 0: # Make sure this is a Chinese token
+                    new_tokens.append(token)
+                    continue
+                if token not in orig_to_dummy_token:
+                    orig_to_dummy_token[token] = f'token{count}'
+                    count += 1
+                new_tokens.append(orig_to_dummy_token[token])
+            new_refs[image_id].append(' '.join(new_tokens))
+
+    new_cands = {}
+    for image_id, caption_list in cands.items():
+        new_cands[image_id] = []
+        for caption in caption_list:
+            new_tokens = []
+            for token in caption.split():
+                if len(regex.findall(r'\p{Han}+', token)) == 0: # Make sure this is a Chinese token
+                    new_tokens.append(token)
+                    continue
+                if token not in orig_to_dummy_token:
+                    orig_to_dummy_token[token] = f'token{count}'
+                    count += 1
+                new_tokens.append(orig_to_dummy_token[token])
+            new_cands[image_id].append(' '.join(new_tokens))
+
+    return new_refs, new_cands
+
 def compute_metrics(references, candidates, lang='en', meteor=False, spice=True):
     references, candidates = remap_image_ids(references, candidates)
     if lang == 'zh':
         tokenized_references = {x[0]: [jieba_tokenize(y) for y in x[1]] for x in references.items()}
         tokenized_candidates = {x[0]: [jieba_tokenize(y) for y in x[1]] for x in candidates.items()}
+        tokenized_references, tokenized_candidates = convert_to_dummy_tokens(tokenized_references, tokenized_candidates)
     else:
         tokenizer = PTBTokenizer()
         tokenized_references = tokenizer.tokenize({x[0]: [{'caption': y} for y in x[1]] for x in references.items()})
