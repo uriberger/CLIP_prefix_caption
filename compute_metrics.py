@@ -26,15 +26,15 @@ def jieba_tokenize(caption):
     tokenized_caption = ' '.join(list(jieba.cut(non_tokenized_caption, cut_all=False)))
     return tokenized_caption
 
-def compute_metrics(references, candidates, lang='en', meteor=False):
+def compute_metrics(references, candidates, lang='en', meteor=False, spice=True):
     references, candidates = remap_image_ids(references, candidates)
     if lang == 'zh':
+        tokenized_references = {x[0]: [jieba_tokenize(y) for y in x[1]] for x in references.items()}
+        tokenized_candidates = {x[0]: [jieba_tokenize(y) for y in x[1]] for x in candidates.items()}
+    else:
         tokenizer = PTBTokenizer()
         tokenized_references = tokenizer.tokenize({x[0]: [{'caption': y} for y in x[1]] for x in references.items()})
         tokenized_candidates = tokenizer.tokenize({x[0]: [{'caption': y} for y in x[1]] for x in candidates.items()})
-    else:
-        tokenized_references = {x[0]: [jieba_tokenize(y) for y in x[1]] for x in references.items()}
-        tokenized_candidates = {x[0]: [jieba_tokenize(y) for y in x[1]] for x in candidates.items()}
 
     ###BLEU#####
     print("Compute BLEU ... ")
@@ -59,7 +59,7 @@ def compute_metrics(references, candidates, lang='en', meteor=False):
     cider, _ = pycoco_cider.compute_score(tokenized_references, tokenized_candidates)
 
     ####SPICE###
-    if lang == 'en':
+    if lang == 'en' and spice:
         print("Compute SPICE ... ")
         pycoco_spice = Spice()
         spice, spice_scores = pycoco_spice.compute_score(tokenized_references, tokenized_candidates)
@@ -80,7 +80,7 @@ def compute_metrics(references, candidates, lang='en', meteor=False):
     bertscore = statistics.mean(results['f1'])
 
     res = {'bleu1': bleu[0], 'bleu2': bleu[1], 'bleu3': bleu[2], 'bleu4': bleu[3], 'rouge': rouge, 'cider': cider, 'bertscore': bertscore}
-    if lang == 'en':
+    if lang == 'en' and spice:
         res['spice'] = spice
         for submetric, val in spice_submetrics_res.items():
             res[submetric] = val
