@@ -1,4 +1,5 @@
 from pycocoevalcap.tokenizer.ptbtokenizer import PTBTokenizer
+import jieba
 from pycocoevalcap.bleu.bleu import Bleu
 from pycocoevalcap.meteor.meteor import Meteor
 from pycocoevalcap.rouge.rouge import Rouge
@@ -20,11 +21,20 @@ def remap_image_ids(references, candidates):
 
     return modified_refs, candidates
 
+def jieba_tokenize(caption):
+    non_tokenized_caption = ''.join(caption.split())
+    tokenized_caption = ' '.join(list(jieba.cut(non_tokenized_caption, cut_all=False)))
+    return tokenized_caption
+
 def compute_metrics(references, candidates, lang='en', meteor=False):
     references, candidates = remap_image_ids(references, candidates)
-    tokenizer = PTBTokenizer()
-    tokenized_references = tokenizer.tokenize({x[0]: [{'caption': y} for y in x[1]] for x in references.items()})
-    tokenized_candidates = tokenizer.tokenize({x[0]: [{'caption': y} for y in x[1]] for x in candidates.items()})
+    if lang == 'zh':
+        tokenizer = PTBTokenizer()
+        tokenized_references = tokenizer.tokenize({x[0]: [{'caption': y} for y in x[1]] for x in references.items()})
+        tokenized_candidates = tokenizer.tokenize({x[0]: [{'caption': y} for y in x[1]] for x in candidates.items()})
+    else:
+        tokenized_references = {x[0]: [jieba_tokenize(y) for y in x[1]] for x in references.items()}
+        tokenized_candidates = {x[0]: [jieba_tokenize(y) for y in x[1]] for x in candidates.items()}
 
     ###BLEU#####
     print("Compute BLEU ... ")
@@ -35,7 +45,7 @@ def compute_metrics(references, candidates, lang='en', meteor=False):
     if meteor:
         print("Compute METEOR ... ")
         pycoco_meteor = Meteor()
-        meteor, _ = pycoco_meteor.compute_score(references, candidates)
+        meteor, _ = pycoco_meteor.compute_score(tokenized_references, tokenized_candidates)
         del pycoco_meteor
 
     ####ROUGE###
