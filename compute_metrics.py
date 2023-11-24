@@ -20,7 +20,7 @@ def remap_image_ids(references, candidates):
 
     return modified_refs, candidates
 
-def compute_metrics(references, candidates, lang='en'):
+def compute_metrics(references, candidates, lang='en', meteor=False):
     references, candidates = remap_image_ids(references, candidates)
     tokenizer = PTBTokenizer()
     tokenized_references = tokenizer.tokenize({x[0]: [{'caption': y} for y in x[1]] for x in references.items()})
@@ -31,11 +31,12 @@ def compute_metrics(references, candidates, lang='en'):
     pycoco_bleu = Bleu()
     bleu, _ = pycoco_bleu.compute_score(tokenized_references, tokenized_candidates)
 
-    # ####METEOR###
-    # print("Compute METEOR ... ")
-    # pycoco_meteor = Meteor()
-    # meteor, _ = pycoco_meteor.compute_score(references, candidates)
-    # del pycoco_meteor
+    ####METEOR###
+    if meteor:
+        print("Compute METEOR ... ")
+        pycoco_meteor = Meteor()
+        meteor, _ = pycoco_meteor.compute_score(references, candidates)
+        del pycoco_meteor
 
     ####ROUGE###
     print("Compute ROUGE ... ")
@@ -73,4 +74,6 @@ def compute_metrics(references, candidates, lang='en'):
         res['spice'] = spice
         for submetric, val in spice_submetrics_res.items():
             res[submetric] = val
+    if meteor:
+        res['meteor'] = meteor
     return res
