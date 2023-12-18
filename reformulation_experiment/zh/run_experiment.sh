@@ -4,45 +4,36 @@ set -e
 MSG_PREFIX=[LOG_MSG]
 BASE_DIR=reformulation_experiment/zh
 EXP_IND=0
-TRAIN_SAMPLE_NUM=20000
-VAL_SAMPLE_NUM=50000
 
-# Base training
+: '# Base training
 echo "$MSG_PREFIX Prepare base training data"
-#venv2/bin/python ${BASE_DIR}/prepare_base_training_data.py ${EXP_IND} ${TRAIN_SAMPLE_NUM} ${VAL_SAMPLE_NUM}
+venv2/bin/python ${BASE_DIR}/prepare_base_training_data.py ${EXP_IND}
 echo "$MSG_PREFIX base preprocess"
-rm -f data/coco/base_train_data_${EXP_IND}_tokens.pkl
-venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/base_train_data/train_data_${EXP_IND}.json --output_file base_train_data_${EXP_IND}
-echo "$MSG_PREFIX Base training"
-venv2/bin/python train.py --data ./data/coco/base_train_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_base --epochs 10 --tokenizer ckiplab/gpt2-base-chinese --gpt2_model ckiplab/gpt2-base-chinese
+DATA_FILE=data/coco/base_train_data.pkl
+if [ -f $DATA_FILE ]; then
+    echo "Base data file exists."
+else
+    echo "Base data file doesnt exist. Creating"
+    rm -f data/coco/base_train_data_tokens.pkl
+    venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/base_train_data/train_data.json --output_file base_train_data
+fi
+echo "$MSG_PREFIX Base training"'
+venv2/bin/python train.py --data ./data/coco/base_train_data.pkl --out_dir /cs/labs/oabend/uriber/${BASE_DIR}/output/exp_${EXP_IND}_base --epochs 10 --tokenizer ckiplab/gpt2-base-chinese --gpt2_model ckiplab/gpt2-base-chinese
 echo "$MSG_PREFIX Base inference"
-venv2/bin/python inference.py --dataset aic --model_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --split test --output_file ${BASE_DIR}/data/infer/base_infer_on_test_${EXP_IND} --gpt2_model ckiplab/gpt2-base-chinese
-
-# GT based training
-echo "$MSG_PREFIX Prepare GT training data"
-#venv2/bin/python ${BASE_DIR}/prepare_gt_training_data.py ${EXP_IND}
-echo "$MSG_PREFIX GT preprocess"
-#rm -f data/coco/multi30k_val_data_${EXP_IND}_tokens.pkl
-#venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/gt_train_data/multi30k_val_data_${EXP_IND}.json --output_file multi30k_val_data_${EXP_IND}
-echo "$MSG_PREFIX GT training"
-#venv2/bin/python train.py --data ./data/coco/multi30k_val_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_gt --epochs 5 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --tokenizer dbmdz/german-gpt2 --gpt2_model dbmdz/german-gpt2
-echo "$MSG_PREFIX GT inference 1 epoch"
-#venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_gt/coco_prefix-000.pt --split test --output_file ${BASE_DIR}/data/infer/gt_infer_on_test_${EXP_IND}_1_epoch --gpt2_model dbmdz/german-gpt2
-echo "$MSG_PREFIX GT inference 5 epochs"
-#venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_gt/coco_prefix-004.pt --split test --output_file ${BASE_DIR}/data/infer/gt_infer_on_test_${EXP_IND}_5_epoch --gpt2_model dbmdz/german-gpt2
+venv2/bin/python inference.py --dataset aic --model_path /cs/labs/oabend/uriber/${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --split test --output_file ${BASE_DIR}/data/infer/base_infer_on_test_${EXP_IND} --gpt2_model ckiplab/gpt2-base-chinese
 
 # Translation based training
-echo "$MSG_PREFIX Prepare translation training data"
-#venv2/bin/python ${BASE_DIR}/prepare_translation_training_data.py ${EXP_IND}
+: 'echo "$MSG_PREFIX Prepare translation training data"
+venv2/bin/python ${BASE_DIR}/prepare_translation_training_data.py ${EXP_IND}
 echo "$MSG_PREFIX Translation preprocess"
-#rm -f data/coco/multi30k_val_translated_data_${EXP_IND}_tokens.pkl
-#venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/translated_train_data/multi30k_val_translated_data_${EXP_IND}.json --output_file multi30k_val_translated_data_${EXP_IND}
+rm -f data/coco/multi30k_val_translated_data_${EXP_IND}_tokens.pkl
+venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/translated_train_data/multi30k_val_translated_data_${EXP_IND}.json --output_file multi30k_val_translated_data_${EXP_IND}
 echo "$MSG_PREFIX Translation training"
-#venv2/bin/python train.py --data ./data/coco/multi30k_val_translated_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_translated --epochs 5 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --tokenizer dbmdz/german-gpt2 --gpt2_model dbmdz/german-gpt2
+venv2/bin/python train.py --data ./data/coco/multi30k_val_translated_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_translated --epochs 5 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --tokenizer dbmdz/german-gpt2 --gpt2_model dbmdz/german-gpt2
 echo "$MSG_PREFIX Translation inference 1 epoch"
-#venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_translated/coco_prefix-000.pt --split test --output_file ${BASE_DIR}/data/infer/translated_infer_on_test_${EXP_IND}_1_epoch --gpt2_model dbmdz/german-gpt2
+venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_translated/coco_prefix-000.pt --split test --output_file ${BASE_DIR}/data/infer/translated_infer_on_test_${EXP_IND}_1_epoch --gpt2_model dbmdz/german-gpt2
 echo "$MSG_PREFIX Translation inference 5 epochs"
-#venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_translated/coco_prefix-004.pt --split test --output_file ${BASE_DIR}/data/infer/translated_infer_on_test_${EXP_IND}_5_epoch --gpt2_model dbmdz/german-gpt2
+venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_translated/coco_prefix-004.pt --split test --output_file ${BASE_DIR}/data/infer/translated_infer_on_test_${EXP_IND}_5_epoch --gpt2_model dbmdz/german-gpt2'
 
 # Own captions based training
 echo "$MSG_PREFIX Base inference on val"
