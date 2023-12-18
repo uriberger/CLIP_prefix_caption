@@ -68,7 +68,7 @@ def compute_metrics(references, candidates, lang='en', meteor=False, spice=True)
     if lang == 'zh':
         tokenized_references = {x[0]: [jieba_tokenize(y) for y in x[1]] for x in references.items()}
         tokenized_candidates = {x[0]: [jieba_tokenize(y) for y in x[1]] for x in candidates.items()}
-        tokenized_references, tokenized_candidates = convert_to_dummy_tokens(tokenized_references, tokenized_candidates)
+        #tokenized_references, tokenized_candidates = convert_to_dummy_tokens(tokenized_references, tokenized_candidates)
     else:
         tokenizer = PTBTokenizer()
         tokenized_references = tokenizer.tokenize({x[0]: [{'caption': y} for y in x[1]] for x in references.items()})
