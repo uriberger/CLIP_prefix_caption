@@ -2,13 +2,13 @@
 set -e
 
 MSG_PREFIX=[LOG_MSG]
-BASE_DIR=reformulation_experiment/en
-EXP_IND=2
+BASE_DIR=/cs/labs/oabend/uriber/reformulation_experiment/en
+EXP_IND=5
 SAMPLE_NUM=100000
 VAL_SAMPLE_NUM=1000
 VAL_STRING="--validation_set_path data/coco/val_data_${EXP_IND}.pkl --steps_evaluation 20"
-BASE_SAMPLE_NUM=25000
-RE_NUM=3
+BASE_SAMPLE_NUM=50000
+RE_NUM=1
 
 echo "Reformulation training on COCO with additional training on COCO, experiment ${EXP_IND}, ${SAMPLE_NUM} samples, ${BASE_SAMPLE_NUM} base samples, re num ${RE_NUM}"
 
@@ -30,20 +30,20 @@ venv2/bin/python inference.py --dataset COCO --model_path ${BASE_DIR}/output/exp
 echo "$MSG_PREFIX GT inference on Flickr30k"
 venv2/bin/python inference.py --dataset flickr30k --model_path ${BASE_DIR}/output/exp_${EXP_IND}_gt/coco_prefix-000.pt --split test --output_file ${BASE_DIR}/data/infer/gt_infer_on_flickr_test_${EXP_IND}
 echo "$MSG_PREFIX GT inference on XM3600"
-venv2/bin/python inference.py --dataset XM3600 --model_path ${BASE_DIR}/output/exp_${EXP_IND}_gt/coco_prefix-000.pt --output_file ${BASE_DIR}/data/infer/gt_infer_on_xm3600_${EXP_IND}
+venv2/bin/python inference.py --dataset XM3600 --model_path ${BASE_DIR}/output/exp_${EXP_IND}_gt/coco_prefix-000.pt --output_file ${BASE_DIR}/data/infer/gt_infer_on_xm3600_${EXP_IND}'
 
 # Base training
 echo "$MSG_PREFIX Prepare base training data"
-venv2/bin/python ${BASE_DIR}/prepare_coco_re_training_data.py ${EXP_IND} ${BASE_SAMPLE_NUM}
+venv2/bin/python ${BASE_DIR}/prepare_coco_re_training_data.py ${EXP_IND} ${BASE_SAMPLE_NUM} ${BASE_DIR}
 echo "$MSG_PREFIX base preprocess"
 rm -f data/coco/base_train_data_${EXP_IND}_tokens.pkl
 venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/train_data/base_train_data_${EXP_IND}.json --output_file base_train_data_${EXP_IND}
 echo "$MSG_PREFIX Base training"
-venv2/bin/python train.py --data ./data/coco/base_train_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_base --epochs 1 ${VAL_STRING}'
+venv2/bin/python train.py --data ./data/coco/base_train_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_base --epochs 1 ${VAL_STRING}
 
 # Re training
 echo "$MSG_PREFIX Re data splitting"
-venv2/bin/python ${BASE_DIR}/split_re_data.py ${EXP_IND} ${RE_NUM}
+venv2/bin/python ${BASE_DIR}/split_re_data.py ${EXP_IND} ${RE_NUM} ${BASE_DIR}
 for (( i=0; i<$RE_NUM; i++ ))
 do
     if [ $i -eq 0 ]
