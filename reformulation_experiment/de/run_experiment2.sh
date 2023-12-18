@@ -3,13 +3,13 @@ set -e
 
 MSG_PREFIX=[LOG_MSG]
 BASE_DIR=reformulation_experiment/de
-EXP_IND=8
-BASE_SAMPLE_NUM=20000
+EXP_IND=5
+BASE_SAMPLE_NUM=
 
 echo "German captioning with additional datasets, experiment ${EXP_IND}"
 
 # Base training
-echo "$MSG_PREFIX Prepare base training data"
+: 'echo "$MSG_PREFIX Prepare base training data"
 venv2/bin/python ${BASE_DIR}/prepare_base_training_data2.py ${EXP_IND} ${BASE_SAMPLE_NUM}
 echo "$MSG_PREFIX base preprocess"
 rm -f data/coco/multi30k_train_data_${EXP_IND}_tokens.pkl
@@ -21,19 +21,23 @@ venv2/bin/python inference.py --model_path ${BASE_DIR}/output/exp_${EXP_IND}_bas
 
 # Translation based training
 echo "$MSG_PREFIX Prepare translation training data"
-venv2/bin/python ${BASE_DIR}/prepare_translation_training_data2.py ${EXP_IND}
+venv2/bin/python ${BASE_DIR}/prepare_translation_training_data2.py ${EXP_IND} ${BASE_DIR}
 echo "$MSG_PREFIX Translation preprocess"
 rm -f data/coco/multi30k_additional_train_translated_data_${EXP_IND}_tokens.pkl
-venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/translated_train_data/multi30k_additional_train_translated_data_${EXP_IND}.json --output_file multi30k_additional_train_translated_data_${EXP_IND}
+venv2/bin/python parse_coco.py --clip_model_type ViT-B/32 --json_file ${BASE_DIR}/data/translated_train_data/multi30k_additional_train_translated_data_${EXP_IND}.json --output_file multi30k_additional_train_translated_data_${EXP_IND}'
 echo "$MSG_PREFIX Translation training"
-venv2/bin/python train.py --data ./data/coco/multi30k_additional_train_translated_data_${EXP_IND}.pkl --out_dir ${BASE_DIR}/output/exp_${EXP_IND}_translated --epochs 5 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --tokenizer dbmdz/german-gpt2 --gpt2_model dbmdz/german-gpt2
+venv2/bin/python train.py --data ./data/coco/multi30k_additional_train_translated_data_${EXP_IND}.pkl --out_dir /cs/labs/oabend/uriber/${BASE_DIR}/output/exp_${EXP_IND}_google_translated --epochs 5 --load_model_from_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --tokenizer dbmdz/german-gpt2 --gpt2_model dbmdz/german-gpt2
 echo "$MSG_PREFIX Translation inference on cross modal 1 epoch"
-venv2/bin/python inference.py --model_path ${BASE_DIR}/output/exp_${EXP_IND}_translated/coco_prefix-000.pt --image_path_file crossmodal_ids_and_paths.json --output_file ${BASE_DIR}/data/infer/translated_infer_on_crossmodal_${EXP_IND}_1_epoch --gpt2_model dbmdz/german-gpt2
+venv2/bin/python inference.py --model_path /cs/labs/oabend/uriber/${BASE_DIR}/output/exp_${EXP_IND}_google_translated/coco_prefix-000.pt --image_path_file crossmodal_ids_and_paths.json --output_file ${BASE_DIR}/data/infer/google_translated_infer_on_crossmodal_${EXP_IND}_1_epoch --gpt2_model dbmdz/german-gpt2
 echo "$MSG_PREFIX Translation inference on cross modal 5 epochs"
-venv2/bin/python inference.py --model_path ${BASE_DIR}/output/exp_${EXP_IND}_translated/coco_prefix-004.pt --image_path_file crossmodal_ids_and_paths.json --output_file ${BASE_DIR}/data/infer/translated_infer_on_crossmodal_${EXP_IND}_5_epoch --gpt2_model dbmdz/german-gpt2
+venv2/bin/python inference.py --model_path /cs/labs/oabend/uriber/${BASE_DIR}/output/exp_${EXP_IND}_google_translated/coco_prefix-004.pt --image_path_file crossmodal_ids_and_paths.json --output_file ${BASE_DIR}/data/infer/google_translated_infer_on_crossmodal_${EXP_IND}_5_epoch --gpt2_model dbmdz/german-gpt2
+echo "$MSG_PREFIX Translation inference on flickr30k 1 epoch"
+venv2/bin/python inference.py --model_path /cs/labs/oabend/uriber/${BASE_DIR}/output/exp_${EXP_IND}_google_translated/coco_prefix-000.pt --dataset flickr30k --split test --output_file ${BASE_DIR}/data/infer/google_translated_infer_on_flickr30k_test_${EXP_IND}_1_epoch --gpt2_model dbmdz/german-gpt2
+echo "$MSG_PREFIX Translation inference on flickr30k 5 epochs"
+venv2/bin/python inference.py --model_path /cs/labs/oabend/uriber/${BASE_DIR}/output/exp_${EXP_IND}_google_translated/coco_prefix-004.pt --dataset flickr30k --split test --output_file ${BASE_DIR}/data/infer/google_translated_infer_on_flickr30k_test_${EXP_IND}_5_epoch --gpt2_model dbmdz/german-gpt2
 
 # Own captions based training: COCO
-echo "$MSG_PREFIX Base inference on additional train: COCO"
+: 'echo "$MSG_PREFIX Base inference on additional train: COCO"
 venv2/bin/python inference.py --json_file ${BASE_DIR}/data/image_ids/coco_image_ids_${EXP_IND}.json --model_path ${BASE_DIR}/output/exp_${EXP_IND}_base/coco_prefix-009.pt --output_file ${BASE_DIR}/data/infer/base_infer_on_coco_${EXP_IND} --dataset COCO --gpt2_model dbmdz/german-gpt2
 echo "$MSG_PREFIX Own data preperation COCO"
 venv2/bin/python ${BASE_DIR}/prepare_own_training_data_coco.py ${EXP_IND}
@@ -78,7 +82,7 @@ venv2/bin/python train.py --data ./data/coco/multi30k_additional_train_mplug_re_
 echo "$MSG_PREFIX mPLUG re inference on cross modal 1 epoch COCO"
 venv2/bin/python inference.py --model_path ${BASE_DIR}/output/exp_${EXP_IND}_mplug_re_coco/coco_prefix-000.pt --image_path_file crossmodal_ids_and_paths.json --output_file ${BASE_DIR}/data/infer/mplug_re_coco_infer_on_crossmodal_${EXP_IND}_1_epoch --gpt2_model dbmdz/german-gpt2
 echo "$MSG_PREFIX mPLUG re inference on cross modal 5 epochs COCO"
-venv2/bin/python inference.py --model_path ${BASE_DIR}/output/exp_${EXP_IND}_mplug_re_coco/coco_prefix-004.pt --image_path_file crossmodal_ids_and_paths.json --output_file ${BASE_DIR}/data/infer/mplug_re_coco_infer_on_crossmodal_${EXP_IND}_5_epoch --gpt2_model dbmdz/german-gpt2
+venv2/bin/python inference.py --model_path ${BASE_DIR}/output/exp_${EXP_IND}_mplug_re_coco/coco_prefix-004.pt --image_path_file crossmodal_ids_and_paths.json --output_file ${BASE_DIR}/data/infer/mplug_re_coco_infer_on_crossmodal_${EXP_IND}_5_epoch --gpt2_model dbmdz/german-gpt2'
 
 # BLIP based training
 : 'echo "$MSG_PREFIX BLIP preprocess COCO"
